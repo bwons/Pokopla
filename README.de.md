@@ -1,4 +1,4 @@
-# Pokopla — The Pokopia planning tool
+# Pokopla — The Pokopia Planning Tool
 
 🇩🇪 Deutsch · [🇬🇧 English](./README.en.md)
 
