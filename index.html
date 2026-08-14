@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Pokopla — The Pokopia Planning Tool</title>
+<title>Pokopla — The Pokopia planning tool</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#14171c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -453,6 +453,8 @@
   footer{
     text-align:center;color:var(--text-dim);font-size:11px;padding:30px 20px 10px;
   }
+  footer a{color:var(--text-dim);text-decoration:underline;text-underline-offset:2px;}
+  footer a:hover{color:var(--accent);}
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
 </style>
@@ -460,7 +462,7 @@
 <body>
 
 <header>
-  <h1>◆ Pokopla <span class="subtitle">The Pokopia Planning Tool</span></h1>
+  <h1>◆ Pokopla <span class="subtitle">The Pokopia planning tool</span></h1>
   <nav class="tabs">
     <button id="tab-pokemon" class="active">Pokémon</button>
     <button id="tab-groups">Gruppen &amp; Habitate</button>
@@ -537,7 +539,7 @@
 
 </main>
 
-<footer>Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup</footer>
+<footer><span id="footer-text">Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup</span> · <a href="https://github.com/bwons/Pokopla" target="_blank" rel="noopener" id="footer-github">📂 Quellcode auf GitHub</a></footer>
 
 <script>
 /* ---------------------------------------------------------
@@ -1235,6 +1237,7 @@ const STRINGS = {
     confirmBtn:"Bestätigen",
     dropzoneText:"⇩ JSON-Backup hier ablegen zum Importieren",
     footer:"Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup",
+    footerGithub:"📂 Quellcode auf GitHub",
     wip:"◐ WIP", done:"✓ DONE",
   },
   en: {
@@ -1288,6 +1291,7 @@ const STRINGS = {
     confirmBtn:"Confirm",
     dropzoneText:"⇩ Drop JSON backup here to import",
     footer:"Data lives locally in this tool (window.storage) · Exporting as backup is recommended",
+    footerGithub:"📂 View source on GitHub",
     wip:"◐ WIP", done:"✓ DONE",
   }
 };
@@ -1387,8 +1391,8 @@ function applyI18n(){
 
   const dz = document.querySelector("#dropzone .dropzone-inner");
   if(dz) dz.textContent = t("dropzoneText");
-  const ft = document.querySelector("footer");
-  if(ft) ft.textContent = t("footer");
+  setText("footer-text", "footer");
+  setText("footer-github", "footerGithub");
 }
 
 function displayName(p){
