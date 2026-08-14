@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pokopla — The Pokopia Planning Tool</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14171c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pokopla">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<style>
+  :root{
+    --bg:#14171c;
+    --panel:#1c2029;
+    --panel-2:#232838;
+    --line:#2c3244;
+    --text:#e7e9f0;
+    --text-dim:#9aa1b4;
+    --accent:#7dd3c0;
+    --accent-2:#e0a458;
+    --danger:#e0637a;
+    --radius:10px;
+    font-family: "IBM Plex Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:18px 24px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+    background:var(--panel);
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  header h1{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:15px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--accent);
+    white-space:nowrap;
+  }
+  header h1 .subtitle{
+    display:block;
+    font-size:9px;
+    letter-spacing:.03em;
+    text-transform:none;
+    color:var(--text-dim);
+    margin-top:1px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:4px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px;
+  }
+  nav.tabs button{
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    padding:7px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.15s;
+  }
+  nav.tabs button.active{
+    background:var(--accent);
+    color:#0c1210;
+  }
+  .searchwrap{
+    flex:1;
+    min-width:180px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  input[type=text], select{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+    font-family:inherit;
+  }
+  input[type=text]:focus, select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  #search{width:100%;}
+  .iconbtn{
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .iconbtn:hover{color:var(--text);border-color:var(--accent);}
+  .discardbtn{border-color:var(--danger);color:var(--danger);}
+  .discardbtn:hover{background:rgba(224,99,122,.12);color:var(--danger);border-color:var(--danger);}
+  .savebtn{background:var(--accent);color:#0c1210;border-color:var(--accent);font-weight:700;}
+  .savebtn:hover{filter:brightness(1.1);color:#0c1210;border-color:var(--accent);}
+  .asklabel{
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--text-dim);white-space:nowrap;
+    cursor:pointer;user-select:none;
+  }
+  .asklabel input[type=checkbox]{accent-color:var(--accent);cursor:pointer;width:14px;height:14px;}
+  #status{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  #status.ok{color:var(--accent);}
+  #status.warn{color:var(--accent-2);}
+
+  main{padding:22px 24px 80px;max-width:1400px;margin:0 auto;}
+
+  .filterbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .filterbar label{font-size:12px;color:var(--text-dim);}
+
+  .table-scroll{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:var(--radius);
+  }
+
+  table{
+    width:100%;
+    min-width:760px;
+    border-collapse:collapse;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-dim);
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-2);
+  }
+  tbody td{
+    padding:9px 12px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    vertical-align:middle;
+  }
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  tbody tr:last-child td{border-bottom:none;}
+  .nr{color:var(--text-dim);font-family:"IBM Plex Mono",monospace;font-size:12px;}
+  .name{font-weight:600;}
+  .abilities{color:var(--text-dim);font-size:12px;}
+  .litem{font-size:12px;color:var(--accent-2);}
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    border:1px solid transparent;
+  }
+  .badgebtn{
+    font-family:inherit;
+    margin:0 0 4px;
+    cursor:pointer;
+    transition:filter .15s;
+  }
+  .badgebtn:hover{filter:brightness(1.15);}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+
+  select.groupselect{min-width:150px;max-width:180px;}
+  select.habitatselect{min-width:150px;max-width:190px;}
+
+  /* Gruppen view */
+  .newgroup{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .newgroup input[type=text]{flex:1;min-width:160px;}
+  .newgroup input[type=color]{
+    width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer;
+  }
+  .primarybtn{
+    background:var(--accent);
+    color:#0c1210;
+    border:none;
+    border-radius:8px;
+    padding:9px 16px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .primarybtn:hover{filter:brightness(1.08);}
+  .primarybtn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .groupgrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));
+    gap:14px;
+  }
+  .groupcard{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    border-top:3px solid var(--accent);
+  }
+  .groupcard .cardhead{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .cardhead-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex:none;
+  }
+  .groupcard h3{
+    margin:0 0 2px;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    overflow-wrap:break-word;
+    word-break:break-word;
+  }
+  .groupcard .desc{
+    font-size:12px;
+    color:var(--text-dim);
+    margin:2px 0 10px;
+    line-height:1.4;
+  }
+  .statusbtn{
+    border-radius:999px;
+    padding:4px 11px;
+    font-size:11px;
+    line-height:16px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:.03em;
+    flex:none;
+    border:1px solid transparent;
+    transition:filter .15s;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:26px;
+    box-sizing:border-box;
+  }
+  .statusbtn:hover{filter:brightness(1.12);}
+  .statusbtn.wip{
+    background:rgba(224,164,88,.16);
+    border-color:var(--accent-2);
+    color:var(--accent-2);
+  }
+  .statusbtn.done{
+    background:rgba(125,211,192,.16);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .editbtn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    border-radius:7px;
+    padding:4px 9px;
+    font-size:11px;
+    line-height:16px;
+    cursor:pointer;
+    flex:none;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:26px;
+    box-sizing:border-box;
+  }
+  .editbtn:hover{color:var(--text);border-color:var(--accent);}
+  .cardedit{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .colorname{display:flex;gap:8px;flex:1;min-width:0;}
+  .colorname input[type=text]{flex:1;min-width:0;}
+  .cardedit input[type=color]{
+    width:38px;height:36px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer;flex:none;
+  }
+  .cardedit input[type=text]{width:100%;}
+  .cardedit .editrow, .editrow{display:flex;justify-content:space-between;gap:8px;margin-top:10px;}
+  .addpoke{
+    margin-top:2px;
+    border-top:1px dashed var(--line);
+    padding-top:10px;
+  }
+  .addpoke label{font-size:11px;color:var(--text-dim);display:block;margin-bottom:5px;}
+  .addpoke-results{
+    max-height:130px;
+    overflow:auto;
+    margin-top:6px;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .addpoke-results button{
+    text-align:left;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:6px;
+    padding:5px 8px;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .addpoke-results button:hover{border-color:var(--accent);}
+  .addpoke-results .nomatch{font-size:12px;color:var(--text-dim);font-style:italic;padding:4px 2px;}
+  .groupcard .count{font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+  .groupcard ul{
+    list-style:none;padding:0;margin:0 0 12px;
+    max-height:150px;overflow:auto;
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .groupcard li{font-size:12.5px;color:var(--text);display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;}
+  .groupcard li:hover{color:var(--accent);}
+  .groupcard li .hab{color:var(--text-dim);font-size:11px;font-style:italic;}
+  .groupcard li[draggable]{cursor:grab;}
+  .member-main{display:flex;align-items:baseline;gap:6px;min-width:0;flex:1;overflow:hidden;}
+  .member-name{flex:none;}
+  .member-abilities{font-size:10.5px;color:var(--text-dim);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;}
+  .groupcard li.dragging{opacity:.4;}
+  .groupcard.drag-over,
+  .groupcard[data-gid].drag-over,
+  .groupcard[data-hid].drag-over{outline:2px dashed var(--accent);outline-offset:2px;}
+  .member-right{display:flex;align-items:center;gap:6px;flex:none;}
+  .member-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  select.member-habitat{
+    font-size:10.5px;padding:2px 4px;max-width:100px;border-radius:5px;
+  }
+  .removepoke{
+    background:transparent;border:none;color:var(--text-dim);
+    cursor:pointer;font-size:15px;line-height:1;padding:0 3px;flex:none;
+  }
+  .removepoke:hover{color:var(--danger);}
+  .groupcard .empty{font-size:12px;color:var(--text-dim);font-style:italic;}
+  .groupcard .actions{display:flex;justify-content:flex-end;}
+  .inline-desc{width:100%;margin:2px 0 10px;}
+  .dangerbtn{
+    background:transparent;
+    border:1px solid var(--danger);
+    color:var(--danger);
+    border-radius:8px;
+    padding:6px 12px;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .dangerbtn:hover{background:rgba(224,99,122,.12);}
+  .dangerbtn.small{padding:4px 9px;font-size:11px;}
+
+  .sectiontitle{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-dim);
+    margin:0 0 12px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;
+  }
+  .customtag{
+    display:inline-block;
+    font-size:10px;
+    color:var(--accent-2);
+    border:1px solid var(--accent-2);
+    border-radius:999px;
+    padding:1px 7px;
+    margin-left:6px;
+    vertical-align:middle;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(6,8,12,.6);
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:20px;
+  }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    max-width:380px;
+    width:100%;
+  }
+  .modal h3{margin:0 0 8px;font-size:15px;}
+  .modal p{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 18px;}
+  .modal .row{display:flex;gap:10px;justify-content:flex-end;}
+  .ghostbtn{
+    background:transparent;border:1px solid var(--line);color:var(--text-dim);
+    border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;
+  }
+  .ghostbtn:hover{color:var(--text);}
+
+  .empty-state{
+    text-align:center;color:var(--text-dim);padding:40px 0;font-size:13px;
+  }
+  footer{
+    text-align:center;color:var(--text-dim);font-size:11px;padding:30px 20px 10px;
+  }
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>◆ Pokopla <span class="subtitle">The Pokopia Planning Tool</span></h1>
+  <nav class="tabs">
+    <button id="tab-pokemon" class="active">Pokémon</button>
+    <button id="tab-groups">Gruppen &amp; Habitate</button>
+  </nav>
+  <button class="iconbtn" id="btn-lang">🌐 EN</button>
+  <button class="iconbtn" id="btn-editmode">✎ Bearbeiten</button>
+  <button class="iconbtn" id="btn-export">⇩ Export JSON</button>
+  <button class="iconbtn" id="btn-import">⇧ Import JSON</button>
+  <button class="iconbtn discardbtn" id="btn-discard" style="display:none;">🗑 Verwerfen</button>
+  <button class="iconbtn savebtn" id="btn-save" style="display:none;">💾 Speichern</button>
+  <label class="asklabel" id="ask-before-removal-wrap" style="display:none;">
+    <input type="checkbox" id="ask-before-removal" checked>
+    <span id="ask-before-removal-text">Vor Entfernen fragen</span>
+  </label>
+  <input type="file" id="file-import" accept="application/json" style="display:none;">
+  <span id="status">Speicher wird geprüft…</span>
+</header>
+
+<main>
+
+  <div id="view-pokemon">
+    <div class="newgroup" id="new-pokemon-form" style="display:none;">
+      <input type="text" id="new-poke-nr" placeholder="Nr. (z. B. C-001)" style="width:110px;">
+      <input type="text" id="new-poke-name" placeholder="Name" style="flex:1;min-width:140px;">
+      <input type="text" id="new-poke-abilities" placeholder="Fähigkeit(en), kommagetrennt" style="flex:1;min-width:180px;">
+      <input type="text" id="new-poke-litter" placeholder="Litter-Item (optional)" style="width:160px;">
+      <button class="primarybtn" id="btn-add-pokemon">+ Pokémon anlegen</button>
+    </div>
+    <div class="filterbar">
+      <div class="searchwrap" id="searchwrap">
+        <input type="text" id="search" placeholder="Pokémon suchen…">
+      </div>
+      <label for="filter-group" id="lbl-filter-group">Nach Gruppe filtern:</label>
+      <select id="filter-group"><option value="">Alle</option></select>
+      <label for="filter-ability" id="lbl-filter-ability" style="margin-left:10px;">Nach Fähigkeit:</label>
+      <select id="filter-ability"><option value="">Alle</option></select>
+    </div>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th id="th-nr" style="width:60px;">Nr.</th>
+          <th id="th-pokemon">Pokémon</th>
+          <th id="th-ability">Fähigkeit(en)</th>
+          <th id="th-litter">Litter-Item</th>
+          <th id="th-group" style="width:190px;">Gruppe</th>
+          <th id="th-habitat" style="width:160px;">Habitat</th>
+          <th id="th-action" style="width:110px;display:none;">Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="pokemon-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div id="view-groups" style="display:none;">
+    <h2 class="sectiontitle" id="sec-groups-title">Custom-Gruppen</h2>
+    <div class="newgroup">
+      <input type="color" id="new-group-color" value="#7dd3c0">
+      <input type="text" id="new-group-name" placeholder="Name der neuen Gruppe…">
+      <input type="text" id="new-group-desc" placeholder="Beschreibung (optional)…">
+      <button class="primarybtn" id="btn-add-group">+ Gruppe anlegen</button>
+    </div>
+    <div class="groupgrid" id="groups-grid"></div>
+
+    <h2 class="sectiontitle" id="sec-habitats-title" style="margin-top:34px;">Habitate</h2>
+    <div class="newgroup">
+      <input type="text" id="new-habitat-name" placeholder="Name des neuen Habitats (z. B. für DLC)…">
+      <input type="text" id="new-habitat-desc" placeholder="Beschreibung (optional)…">
+      <button class="primarybtn" id="btn-add-habitat">+ Habitat anlegen</button>
+    </div>
+    <div class="groupgrid" id="habitats-grid"></div>
+  </div>
+
+</main>
+
+<footer>Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup</footer>
+
+<script>
+/* ---------------------------------------------------------
+   POKÉMON-DATENBANK (aus der Pokopia-CSV)
+--------------------------------------------------------- */
+const POKEMON_DATA = [
+["001","Bulbasaur",["Grow"],null],
+["002","Ivysaur",["Grow"],null],
+["003","Venusaur",["Grow","Litter"],"Leaves"],
+["004","Charmander",["Burn"],null],
+["005","Charmeleon",["Burn"],null],
+["006","Charizard",["Burn","Fly"],null],
+["007","Squirtle",["Water"],null],
+["008","Wartortle",["Water"],null],
+["009","Blastoise",["Water","Trade"],null],
+["010","Pidgey",["Fly","Search"],null],
+["011","Pidgeotto",["Fly","Search"],null],
+["012","Pidgeot",["Fly","Chop"],null],
+["013","Oddish",["Grow"],null],
+["014","Gloom",["Grow"],null],
+["015","Vileplume",["Grow","Litter"],"Leaves"],
+["016","Bellossom",["Grow","Hype"],null],
+["017","Paras",["Search"],null],
+["018","Parasect",["Search"],null],
+["019","Venonat",["Search"],null],
+["020","Venomoth",["Search"],null],
+["021","Bellsprout",["Grow","Litter"],"Vine rope"],
+["022","Weepinbell",["Grow","Litter"],"Vine rope"],
+["023","Victreebel",["Grow","Chop"],null],
+["024","Slowpoke",["Water","Yawn"],null],
+["025","Slowbro",["Water","Trade"],null],
+["026","Slowking",["Water","Teleport"],null],
+["027","Magnemite",["Generate"],null],
+["028","Magneton",["Generate"],null],
+["029","Magnezone",["Generate","Recycle"],null],
+["030","Onix",["Crush","Bulldoze"],null],
+["031","Steelix",["Crush","Bulldoze"],null],
+["032","Cubone",["Build"],null],
+["033","Marowak",["Build"],null],
+["034","Tyrogue",["Trade"],null],
+["035","Hitmonlee",["Trade"],null],
+["036","Hitmonchan",["Trade"],null],
+["037","Hitmontop",["Trade"],null],
+["038","Koffing",["Recycle"],null],
+["039","Weezing",["Recycle"],null],
+["040","Tangela",["Grow","Litter"],"Vine rope"],
+["041","Professor Tangrowth",["Appraise"],null],
+["041","Tangrowth",["Grow","Litter"],"Vine rope"],
+["042","Scyther",["Chop"],null],
+["043","Scizor",["Chop"],null],
+["044","Pinsir",["Chop","Build"],null],
+["045","Magikarp",["??? (unbekannt)"],null],
+["046","Gyarados",["Water"],null],
+["047","Ditto",["Transform"],null],
+["048","Hoothoot",["Trade","Fly"],null],
+["049","Noctowl",["Trade","Fly"],null],
+["050","Heracross",["Chop","Build"],null],
+["051","Volbeat",["Hype"],null],
+["052","Illumise",["Hype"],null],
+["053","Gulpin",["Storage"],null],
+["054","Swalot",["Storage"],null],
+["055","Cacnea",["Grow"],null],
+["056","Cacturne",["Grow","Litter"],"Sturdy stick"],
+["057","Combee",["Litter"],"Honey"],
+["058","Vespiquen",["Gather Honey","Search"],null],
+["059","Shellos",["Water"],null],
+["059","Shellos (East Sea)",["Water"],null],
+["060","Gastrodon",["Water","Trade"],null],
+["060","Gastrodon (East Sea)",["Water","Trade"],null],
+["061","Drifloon",["Dream Island"],null],
+["062","Drifblim",["Fly","Gather"],null],
+["063","Drilbur",["Search"],null],
+["064","Excadrill",["Search","Chop"],null],
+["065","Timburr",["Build"],null],
+["066","Gurdurr",["Build"],null],
+["067","Conkeldurr",["Build","Crush"],null],
+["068","Litwick",["Burn"],null],
+["069","Lampent",["Burn"],null],
+["070","Chandelure",["Burn"],null],
+["071","Axew",["Chop"],null],
+["072","Fraxure",["Chop"],null],
+["073","Haxorus",["Chop","Litter"],"Small log"],
+["074","Goomy",["Water"],null],
+["075","Sliggoo",["Water"],null],
+["076","Goodra",["Water","Trade"],null],
+["077","Cramorant",["Fly","Water"],null],
+["078","Pichu",["Generate"],null],
+["079","Peakychu",["Illuminate"],null],
+["079","Pikachu",["Generate"],null],
+["080","Raichu",["Generate","Hype"],null],
+["081","Zubat",["Search"],null],
+["082","Golbat",["Search"],null],
+["083","Crobat",["Search","Chop"],null],
+["084","Meowth",["Trade"],null],
+["085","Persian",["Trade","Search"],null],
+["086","Psyduck",["Search"],null],
+["087","Golduck",["Search"],null],
+["088","Growlithe",["Burn","Search"],null],
+["089","Arcanine",["Burn","Search"],null],
+["090","Farfetch'd",["Chop","Build"],null],
+["091","Grimer",["Litter"],"Nonburnable garbage"],
+["092","Muk",["Litter"],"Nonburnable garbage"],
+["093","Gastly",["Gather","Trade"],null],
+["094","Haunter",["Gather","Trade"],null],
+["095","Gengar",["Gather","Trade"],null],
+["096","Voltorb",["Generate","Explode"],null],
+["097","Electrode",["Generate","Explode"],null],
+["098","Exeggcute",["Grow","Teleport"],null],
+["099","Exeggutor",["Grow","Teleport"],null],
+["100","Happiny",["Trade"],null],
+["101","Chansey",["Trade"],null],
+["102","Blissey",["Trade","Litter"],"Stone"],
+["103","Elekid",["Generate"],null],
+["104","Electabuzz",["Generate"],null],
+["105","Electivire",["Generate","Crush"],null],
+["106","Lapras",["Water"],null],
+["107","Munchlax",["Bulldoze"],null],
+["108","Mosslax",["Eat"],null],
+["108","Snorlax",["Trade","Bulldoze"],null],
+["109","Spinarak",["Litter"],"Twine"],
+["110","Ariados",["Litter"],"Twine"],
+["111","Mareep",["Generate","Litter"],"Fluff"],
+["112","Flaaffy",["Generate","Litter"],"Fluff"],
+["113","Ampharos",["Generate","Trade"],null],
+["114","Azurill",["Water","Hype"],null],
+["115","Marill",["Water","Hype"],null],
+["116","Azumarill",["Water","Build"],null],
+["117","Paldean Wooper",["Litter"],"Squishy clay"],
+["118","Clodsire",["Litter","Bulldoze"],"Squishy clay"],
+["119","Smeargle",["Paint"],null],
+["120","Torchic",["Burn"],null],
+["121","Combusken",["Burn","Build"],null],
+["122","Blaziken",["Burn","Build"],null],
+["123","Wingull",["Water","Fly"],null],
+["124","Pelipper",["Water","Fly"],null],
+["125","Makuhita",["Build","Bulldoze"],null],
+["126","Hariyama",["Build","Bulldoze"],null],
+["127","Absol",["Chop"],null],
+["128","Piplup",["Water"],null],
+["129","Prinplup",["Water","Trade"],null],
+["130","Empoleon",["Water","Trade"],null],
+["131","Audino",["Trade"],null],
+["132","Trubbish",["Recycle"],null],
+["133","Garbodor",["Recycle","Litter"],"Nonburnable garbage"],
+["134","Zorua",["Trade"],null],
+["135","Zoroark",["Trade","Chop"],null],
+["136","Minccino",["Gather"],null],
+["137","Cinccino",["Gather","Recycle"],null],
+["138","Grubbin",["Chop"],null],
+["139","Charjabug",["Generate","Chop"],null],
+["140","Vikavolt",["Generate","Chop"],null],
+["141","Mimikyu",["Trade"],null],
+["142","Pawmi",["Generate"],null],
+["143","Pawmo",["Generate","Crush"],null],
+["144","Pawmot",["Generate","Crush"],null],
+["145","Tatsugiri (alle Formen)",["Trade"],null],
+["146","Ekans",["Search"],null],
+["147","Arbok",["Search"],null],
+["148","Cleffa",["Hype"],null],
+["149","Clefairy",["Hype"],null],
+["150","Clefable",["Hype","Trade"],null],
+["151","Igglybuff",["Hype"],null],
+["152","Jigglypuff",["Hype"],null],
+["153","Wigglytuff",["Hype","Trade"],null],
+["154","Diglett",["Hype"],null],
+["155","Dugtrio",["Hype","Crush"],null],
+["156","Machop",["Build","Gather"],null],
+["157","Machoke",["Build","Gather"],null],
+["158","Machamp",["Build","Gather"],null],
+["159","Geodude",["Crush"],null],
+["160","Graveler",["Crush"],null],
+["161","Golem",["Crush","Trade"],null],
+["162","Magby",["Burn"],null],
+["163","Magmar",["Burn"],null],
+["164","Magmortar",["Burn","Crush"],null],
+["165","Bonsly",["Bulldoze"],null],
+["166","Sudowoodo",["Trade"],null],
+["167","Murkrow",["Trade","Fly"],null],
+["168","Honchkrow",["Trade","Fly"],null],
+["169","Larvitar",["Crush","Bulldoze"],null],
+["170","Pupitar",["Crush","Bulldoze"],null],
+["171","Tyranitar",["Crush","Bulldoze"],null],
+["172","Lotad",["Water"],null],
+["173","Lombre",["Water"],null],
+["174","Ludicolo",["Water","Hype"],null],
+["175","Mawile",["Trade","Build"],null],
+["176","Torkoal",["Burn"],null],
+["177","Kricketot",["Hype"],null],
+["178","Kricketune",["Hype"],null],
+["179","Chatot",["Hype","Fly"],null],
+["180","Riolu",["Build"],null],
+["181","Lucario",["Build"],null],
+["182","Stereo Rotom",["DJ"],null],
+["183","Larvesta",["Burn","Litter"],"Twine"],
+["184","Volcarona",["Burn","Litter"],"Twine"],
+["185","Rowlet",["Grow"],null],
+["186","Dartrix",["Grow","Chop"],null],
+["187","Decidueye",["Grow","Chop"],null],
+["188","Scorbunny",["Burn"],null],
+["189","Raboot",["Burn"],null],
+["190","Cinderace",["Burn","Hype"],null],
+["191","Skwovet",["Search","Hype"],null],
+["192","Greedent",["Party"],null],
+["193","Rolycoly",["Burn","Gather"],null],
+["194","Carkol",["Burn","Gather"],null],
+["195","Coalossal",["Burn","Gather"],null],
+["196","Toxel",["Generate"],null],
+["197","Toxtricity (Amped/Low Key Form)",["Generate","Hype"],null],
+["198","Fidough",["Search"],null],
+["199","Dachsbun",["Search","Trade"],null],
+["200","Charcadet",["Burn"],null],
+["201","Armarouge",["Burn","Trade"],null],
+["202","Ceruledge",["Burn","Trade"],null],
+["203","Glimmet",["Litter"],"Iron ore"],
+["204","Glimmora",["Litter"],"Iron ore"],
+["205","Gimmighoul",["Collect"],null],
+["206","Gholdengo",["Collect"],null],
+["207","Vulpix",["Burn"],null],
+["208","Ninetales",["Burn"],null],
+["209","Poliwag",["Water"],null],
+["210","Poliwhirl",["Water"],null],
+["211","Poliwrath",["Water","Build"],null],
+["212","Politoed",["Water","Hype"],null],
+["213","Abra",["Teleport"],null],
+["214","Kadabra",["Teleport"],null],
+["215","Alakazam",["Teleport","Trade"],null],
+["216","Mime Jr.",["Gather"],null],
+["217","Mr. Mime",["Gather","Build"],null],
+["218","Porygon",["Recycle"],null],
+["219","Porygon2",["Recycle"],null],
+["220","Porygon-Z",["Rarify"],null],
+["221","Dratini",["Water"],null],
+["222","Dragonair",["Water"],null],
+["223","Dragonite",["Water","Fly"],null],
+["224","Cyndaquil",["Burn"],null],
+["225","Quilava",["Burn"],null],
+["226","Typhlosion",["Burn","Trade"],null],
+["227","Misdreavus",["Trade"],null],
+["228","Mismagius",["Gather","Trade"],null],
+["229","Girafarig",["Gather"],null],
+["230","Farigiraf",["Gather","Search"],null],
+["231","Ralts",["Teleport"],null],
+["232","Kirlia",["Teleport"],null],
+["233","Gardevoir",["Teleport","Trade"],null],
+["234","Gallade",["Teleport","Build"],null],
+["235","Plusle",["Generate"],null],
+["236","Minun",["Generate"],null],
+["237","Trapinch",["Litter"],"Squishy clay"],
+["238","Vibrava",["Bulldoze","Fly"],null],
+["239","Flygon",["Bulldoze","Fly"],null],
+["240","Swablu",["Litter"],"Fluff"],
+["241","Altaria",["Litter","Fly"],"Fluff"],
+["242","Duskull",["Gather"],null],
+["243","Dusclops",["Gather"],null],
+["244","Dusknoir",["Gather","Trade"],null],
+["245","Beldum",["Recycle"],null],
+["246","Metang",["Recycle"],null],
+["247","Metagross",["Recycle","Crush"],null],
+["248","Snivy",["Litter"],"Vine rope"],
+["249","Servine",["Litter"],"Vine rope"],
+["250","Serperior",["Litter"],"Vine rope"],
+["251","Froakie",["Water"],null],
+["252","Frogadier",["Water"],null],
+["253","Greninja",["Water","Chop"],null],
+["254","Dedenne",["Search"],null],
+["255","Noibat",["Search"],null],
+["256","Noivern",["Search","Fly"],null],
+["257","Rookidee",["Chop"],null],
+["258","Corvisquire",["Chop"],null],
+["259","Corviknight",["Chop","Fly"],null],
+["260","Dreepy",["Gather","Search"],null],
+["261","Drakloak",["Gather","Search"],null],
+["262","Dragapult",["Gather","Trade"],null],
+["263","Sprigatito",["Grow"],null],
+["264","Floragato",["Grow"],null],
+["265","Meowscarada",["Grow","Hype"],null],
+["266","Wattrel",["Generate"],null],
+["267","Kilowattrel",["Generate","Fly"],null],
+["268","Tinkatink",["Build"],null],
+["269","Tinkatuff",["Build"],null],
+["270","Tinkaton",["Engineer"],null],
+["271","Aerodactyl",["Fly"],null],
+["272","Cranidos",["Crush"],null],
+["273","Rampardos",["Litter"],"Stone"],
+["274","Shieldon",["Crush"],null],
+["275","Bastiodon",["Litter"],"Stone"],
+["276","Tyrunt",["Crush"],null],
+["277","Tyrantrum",["Litter"],"Stone"],
+["278","Amaura",["Crush"],null],
+["279","Aurorus",["Litter"],"Stone"],
+["280","Eevee",["Trade"],null],
+["281","Vaporeon",["Water"],null],
+["282","Jolteon",["Generate"],null],
+["283","Flareon",["Burn"],null],
+["284","Espeon",["Gather"],null],
+["285","Umbreon",["Search"],null],
+["286","Leafeon",["Grow"],null],
+["287","Glaceon",["Trade"],null],
+["288","Sylveon",["Hype"],null],
+["289","Kyogre",["??? (unbekannt)"],null],
+["290","Raikou",["Generate"],null],
+["291","Entei",["Burn"],null],
+["292","Suicune",["Water"],null],
+["293","Volcanion",["Burn"],null],
+["294","Articuno",["Fly"],null],
+["295","Zapdos",["Fly"],null],
+["296","Moltres",["Fly"],null],
+["297","Lugia",["??? (unbekannt)"],null],
+["298","Ho-Oh",["??? (unbekannt)"],null],
+["299","Mewtwo",["Teleport"],null],
+["300","Mew",["Teleport"],null],
+["E-001","Hoppip",["Grow"],null],
+["E-002","Skiploom",["Grow"],null],
+["E-003","Jumpluff",["Grow","Litter"],"Fluff"],
+["E-004","Sableye",["Search"],null],
+["E-005","Jirachi",["Litter"],"Stardust"],
+["B-001","Shellder",["Scrub","Litter"],"Seashell"],
+["B-002","Cloyster",["Scrub","Litter"],"Seashell"],
+["B-003","Horsea",["Water"],null],
+["B-004","Seadra",["Water","Litter"],"Black Paint"],
+["B-005","Kingdra",["Water","Litter"],"Black Paint"],
+["B-006","Staryu",["Teleport"],null],
+["B-007","Starmie",["Teleport","Gather"],null],
+["B-008","Totodile",["Chop"],null],
+["B-009","Croconaw",["Chop","Crush"],null],
+["B-010","Feraligatr",["Chop","Crush"],null],
+["B-011","Chinchou",["Generate"],null],
+["B-012","Lanturn",["Generate","Water"],null],
+["B-013","Corsola",["Grow"],null],
+["B-014","Mudkip",["Water"],null],
+["B-015","Marshtomp",["Water","Build"],null],
+["B-016","Swampert",["Bulldoze","Build"],null],
+["B-017","Carvanha",["Chop"],null],
+["B-018","Sharpedo",["Crush","Scrub"],null],
+["B-019","Barboach",["Search"],null],
+["B-020","Whiscash",["Search","Bulldoze"],null],
+["B-021","Corphish",["Build"],null],
+["B-022","Crawdaunt",["Build","Crush"],null],
+["B-023","Luvdisc",["Hype"],null],
+["B-024","Buizel",["Chop","Trade"],null],
+["B-025","Floatzel",["Build","Trade"],null],
+["B-026","Finneon",["Hype"],null],
+["B-027","Lumineon",["Hype","Water"],null],
+["B-028","Frillish",["Search","Burn"],null],
+["B-029","Jellicent",["Search","Burn"],null],
+["B-030","Alomomola",["Water","Scrub"],null],
+["B-031","Stunfisk",["Generate","Bulldoze"],null],
+["B-032","Inkay",["Gather","Teleport"],null],
+["B-033","Malamar",["Gather","Teleport"],null],
+["B-034","Popplio",["Hype","Water"],null],
+["B-035","Brionne",["Hype","Trade"],null],
+["B-036","Primarina",["Hype","Scrub"],null],
+["B-037","Mareanie",["Recycle"],null],
+["B-038","Toxapex",["Recycle","Build"],null],
+["B-039","Wimpod",["Recycle"],null],
+["B-040","Golisopod",["Recycle","Chop"],null],
+["B-041","Bruxish",["Gather","Teleport"],null],
+["B-042","Dhelmise",["Grow","Litter"],"Nonburnable Garbage"],
+["B-043","Chewtle",["Chop"],null],
+["B-044","Drednaw",["Chop","Bulldoze"],null],
+["B-045","Pincurchin",["Generate"],null],
+["B-046","Wiglett",["Bulldoze"],null],
+["B-047","Wugtrio",["Bulldoze","Search"],null],
+["B-048","Veluza",["Gather","Teleport"],null],
+["B-049","Phione",["Trade"],null],
+["B-050","Manaphy",["Trade","Hype"],null]
+].map(([nr,name,abilities,litterItem])=>({
+  id: nr+"__"+name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""),
+  nr, name, abilities, litterItem
+}));
+
+/* ---------------------------------------------------------
+   DEUTSCHE ÜBERSETZUNGEN (Quelle: bisafans.de)
+   Deckt Pokopia-Dex #001–147 + kompletten Blubbmeeria-DLC + Events ab.
+   Fehlt ein Eintrag (z. B. #148–279 der Hauptliste), wird automatisch
+   der englische Name als Fallback angezeigt.
+--------------------------------------------------------- */
+const NAME_DE = {
+  "001__bulbasaur":"Bisasam","002__ivysaur":"Bisaknosp","003__venusaur":"Bisaflor",
+  "004__charmander":"Glumanda","005__charmeleon":"Glutexo","006__charizard":"Glurak",
+  "007__squirtle":"Schiggy","008__wartortle":"Schillok","009__blastoise":"Turtok",
+  "010__pidgey":"Taubsi","011__pidgeotto":"Tauboga","012__pidgeot":"Tauboss",
+  "013__oddish":"Myrapla","014__gloom":"Duflor","015__vileplume":"Giflor",
+  "016__bellossom":"Blubella","017__paras":"Paras","018__parasect":"Parasek",
+  "019__venonat":"Bluzuk","020__venomoth":"Omot","021__bellsprout":"Knofensa",
+  "022__weepinbell":"Ultrigaria","023__victreebel":"Sarzenia","024__slowpoke":"Flegmon",
+  "025__slowbro":"Lahmus","026__slowking":"Laschoking","027__magnemite":"Magnetilo",
+  "028__magneton":"Magneton","029__magnezone":"Magnezone","030__onix":"Onix",
+  "031__steelix":"Stahlos","032__cubone":"Tragosso","033__marowak":"Knogga",
+  "034__tyrogue":"Rabauz","035__hitmonlee":"Kicklee","036__hitmonchan":"Nockchan",
+  "037__hitmontop":"Kapoera","038__koffing":"Smogon","039__weezing":"Smogmog",
+  "040__tangela":"Tangela","041__professor-tangrowth":"Tangoloss (Professor)","041__tangrowth":"Tangoloss",
+  "042__scyther":"Sichlor","043__scizor":"Scherox","044__pinsir":"Pinsir",
+  "045__magikarp":"Karpador","046__gyarados":"Garados","047__ditto":"Ditto",
+  "048__hoothoot":"Hoothoot","049__noctowl":"Noctuh","050__heracross":"Skaraborn",
+  "051__volbeat":"Volbeat","052__illumise":"Illumise","053__gulpin":"Schluppuck",
+  "054__swalot":"Schlukwech","055__cacnea":"Tuska","056__cacturne":"Noktuska",
+  "057__combee":"Wadribie","058__vespiquen":"Honweisel","059__shellos":"Schalellos",
+  "059__shellos-east-sea":"Schalellos (Ost)","060__gastrodon":"Gastrodon","060__gastrodon-east-sea":"Gastrodon (Ost)",
+  "061__drifloon":"Driftlon","062__drifblim":"Drifzepeli","063__drilbur":"Rotomurf",
+  "064__excadrill":"Stalobor","065__timburr":"Praktibalk","066__gurdurr":"Strepoli",
+  "067__conkeldurr":"Meistagrif","068__litwick":"Lichtel","069__lampent":"Laternecto",
+  "070__chandelure":"Skelabra","071__axew":"Milza","072__fraxure":"Sharfax",
+  "073__haxorus":"Maxax","074__goomy":"Viscora","075__sliggoo":"Viscargot",
+  "076__goodra":"Viscogon","077__cramorant":"Urgl","078__pichu":"Pichu",
+  "079__peakychu":"Pikachu (Schlappchu)","079__pikachu":"Pikachu","080__raichu":"Raichu",
+  "081__zubat":"Zubat","082__golbat":"Golbat","083__crobat":"Iksbat",
+  "084__meowth":"Mauzi","085__persian":"Snobilikat","086__psyduck":"Enton",
+  "087__golduck":"Entoron","088__growlithe":"Fukano","089__arcanine":"Arkani",
+  "090__farfetch-d":"Porenta","091__grimer":"Sleima","092__muk":"Sleimok",
+  "093__gastly":"Nebulak","094__haunter":"Alpollo","095__gengar":"Gengar",
+  "096__voltorb":"Voltobal","097__electrode":"Lektrobal","098__exeggcute":"Owei",
+  "099__exeggutor":"Kokowei","100__happiny":"Wonneira","101__chansey":"Chaneira",
+  "102__blissey":"Heiteira","103__elekid":"Elekid","104__electabuzz":"Elektek",
+  "105__electivire":"Elevoltek","106__lapras":"Lapras","107__munchlax":"Mampfaxo",
+  "108__mosslax":"Relaxo (Mooslaxo)","108__snorlax":"Relaxo","109__spinarak":"Webarak",
+  "110__ariados":"Ariados","111__mareep":"Voltilamm","112__flaaffy":"Waaty",
+  "113__ampharos":"Ampharos","114__azurill":"Azurill","115__marill":"Marill",
+  "116__azumarill":"Azumarill","117__paldean-wooper":"Felino (Paldea)","118__clodsire":"Suelord",
+  "119__smeargle":"Farbeagle (Meister)","120__torchic":"Flemmli","121__combusken":"Jungglut",
+  "122__blaziken":"Lohgock","123__wingull":"Wingull","124__pelipper":"Pelipper",
+  "125__makuhita":"Makuhita","126__hariyama":"Hariyama","127__absol":"Absol",
+  "128__piplup":"Plinfa","129__prinplup":"Pliprin","130__empoleon":"Impoleon",
+  "131__audino":"Ohrdoch","132__trubbish":"Unratütox","133__garbodor":"Deponitox",
+  "134__zorua":"Zorua","135__zoroark":"Zoroark","136__minccino":"Picochilla",
+  "137__cinccino":"Chillabell","138__grubbin":"Mabula","139__charjabug":"Akkup",
+  "140__vikavolt":"Donarion","141__mimikyu":"Mimigma","142__pawmi":"Pamo",
+  "143__pawmo":"Pamamo","144__pawmot":"Pamomamo","145__tatsugiri-alle-formen":"Nigiragi",
+  "146__ekans":"Rettan","147__arbok":"Arbok",
+  "148__cleffa":"Pii",
+  "149__clefairy":"Piepi",
+  "150__clefable":"Pixi",
+  "151__igglybuff":"Fluffeluff",
+  "152__jigglypuff":"Pummeluff",
+  "153__wigglytuff":"Knuddeluff",
+  "154__diglett":"Digda",
+  "155__dugtrio":"Digdri",
+  "156__machop":"Machollo",
+  "157__machoke":"Maschock",
+  "158__machamp":"Machomei",
+  "159__geodude":"Kleinstein",
+  "160__graveler":"Georok",
+  "161__golem":"Geowaz",
+  "162__magby":"Magby",
+  "163__magmar":"Magmar",
+  "164__magmortar":"Magbrant",
+  "165__bonsly":"Mobai",
+  "166__sudowoodo":"Mogelbaum",
+  "167__murkrow":"Kramurx",
+  "168__honchkrow":"Kramshef",
+  "169__larvitar":"Larvitar",
+  "170__pupitar":"Pupitar",
+  "171__tyranitar":"Despotar",
+  "172__lotad":"Loturzel",
+  "173__lombre":"Lombrero",
+  "174__ludicolo":"Kappalores",
+  "175__mawile":"Flunkifer",
+  "176__torkoal":"Qurtel",
+  "177__kricketot":"Zirpurze",
+  "178__kricketune":"Zirpeise",
+  "179__chatot":"Plaudagei",
+  "180__riolu":"Riolu",
+  "181__lucario":"Lucario",
+  "182__stereo-rotom":"Rotom (DJ)",
+  "183__larvesta":"Ignivor",
+  "184__volcarona":"Ramoth",
+  "185__rowlet":"Bauz",
+  "186__dartrix":"Arboretoss",
+  "187__decidueye":"Silvarro",
+  "188__scorbunny":"Hopplo",
+  "189__raboot":"Kickerlo",
+  "190__cinderace":"Liberlo",
+  "191__skwovet":"Raffel",
+  "192__greedent":"Schlaraffel (Chefkoch)",
+  "193__rolycoly":"Klonkett",
+  "194__carkol":"Wagong",
+  "195__coalossal":"Montecarbo",
+  "196__toxel":"Toxel",
+  "197__toxtricity-amped-low-key-form":"Riffex",
+  "198__fidough":"Hefel",
+  "199__dachsbun":"Backel",
+  "200__charcadet":"Knarbon",
+  "201__armarouge":"Crimanzo",
+  "202__ceruledge":"Azugladis",
+  "203__glimmet":"Lumispross",
+  "204__glimmora":"Lumiflora",
+  "205__gimmighoul":"Gierspenst",
+  "206__gholdengo":"Monetigo",
+  "207__vulpix":"Vulpix",
+  "208__ninetales":"Vulnona",
+  "209__poliwag":"Quapsel",
+  "210__poliwhirl":"Quaputzi",
+  "211__poliwrath":"Quappo",
+  "212__politoed":"Quaxo",
+  "213__abra":"Abra",
+  "214__kadabra":"Kadabra",
+  "215__alakazam":"Simsala",
+  "216__mime-jr":"Pantimimi",
+  "217__mr-mime":"Pantimos",
+  "218__porygon":"Porygon",
+  "219__porygon2":"Porygon2",
+  "220__porygon-z":"Porygon-Z",
+  "221__dratini":"Dratini",
+  "222__dragonair":"Dragonir",
+  "223__dragonite":"Dragoran",
+  "224__cyndaquil":"Feurigel",
+  "225__quilava":"Igelavar",
+  "226__typhlosion":"Tornupto",
+  "227__misdreavus":"Traunfugil",
+  "228__mismagius":"Traunmagil",
+  "229__girafarig":"Girafarig",
+  "230__farigiraf":"Farigiraf",
+  "231__ralts":"Trasla",
+  "232__kirlia":"Kirlia",
+  "233__gardevoir":"Guardevoir",
+  "234__gallade":"Galagladi",
+  "235__plusle":"Plusle",
+  "236__minun":"Minun",
+  "237__trapinch":"Knacklion",
+  "238__vibrava":"Vibrava",
+  "239__flygon":"Libelldra",
+  "240__swablu":"Wablu",
+  "241__altaria":"Altaria",
+  "242__duskull":"Zwirrlicht",
+  "243__dusclops":"Zwirrklop",
+  "244__dusknoir":"Zwirrfinst",
+  "245__beldum":"Tanhel",
+  "246__metang":"Metang",
+  "247__metagross":"Metagross",
+  "248__snivy":"Serpifeu",
+  "249__servine":"Efoserp",
+  "250__serperior":"Serpiroyal",
+  "251__froakie":"Froxy",
+  "252__frogadier":"Amphizel",
+  "253__greninja":"Quajutsu",
+  "254__dedenne":"Dedenne",
+  "255__noibat":"eF-eM",
+  "256__noivern":"UHaFnir",
+  "257__rookidee":"Meikro",
+  "258__corvisquire":"Kranoviz",
+  "259__corviknight":"Krarmor",
+  "260__dreepy":"Grolldra",
+  "261__drakloak":"Phandra",
+  "262__dragapult":"Katapuldra",
+  "263__sprigatito":"Felori",
+  "264__floragato":"Feliospa",
+  "265__meowscarada":"Maskagato",
+  "266__wattrel":"Voltrel",
+  "267__kilowattrel":"Voltrean",
+  "268__tinkatink":"Forgita",
+  "269__tinkatuff":"Tafforgita",
+  "270__tinkaton":"Granforgita (Bauleiter)",
+  "271__aerodactyl":"Aerodactyl",
+  "272__cranidos":"Koknodon",
+  "273__rampardos":"Rameidon",
+  "274__shieldon":"Schilterus",
+  "275__bastiodon":"Bollterus",
+  "276__tyrunt":"Balgoras",
+  "277__tyrantrum":"Monargoras",
+  "278__amaura":"Amarino",
+  "279__aurorus":"Amagarga",
+  "280__eevee":"Evoli",
+  "281__vaporeon":"Aquana",
+  "282__jolteon":"Blitza",
+  "283__flareon":"Flamara",
+  "284__espeon":"Psiana",
+  "285__umbreon":"Nachtara",
+  "286__leafeon":"Folipurba",
+  "287__glaceon":"Glaziola",
+  "288__sylveon":"Feelinara",
+  "289__kyogre":"Kyogre",
+  "290__raikou":"Raikou",
+  "291__entei":"Entei",
+  "292__suicune":"Suicune",
+  "293__volcanion":"Volcanion",
+  "294__articuno":"Arktos",
+  "295__zapdos":"Zapdos",
+  "296__moltres":"Lavados",
+  "297__lugia":"Lugia",
+  "298__ho-oh":"Ho-Oh",
+  "299__mewtwo":"Mewtu",
+  "300__mew":"Mew",
+  // Event-Pokémon
+  "E-001__hoppip":"Hoppspross","E-002__skiploom":"Hubelupf","E-003__jumpluff":"Papungha",
+  "E-004__sableye":"Zobiris","E-005__jirachi":"Jirachi",
+  // Blubbmeeria-DLC
+  "B-001__shellder":"Muschas","B-002__cloyster":"Austos","B-003__horsea":"Seeper",
+  "B-004__seadra":"Seemon","B-005__kingdra":"Seedraking","B-006__staryu":"Sterndu",
+  "B-007__starmie":"Starmie","B-008__totodile":"Karnimani","B-009__croconaw":"Tyracroc",
+  "B-010__feraligatr":"Impergator","B-011__chinchou":"Lampi","B-012__lanturn":"Lanturn",
+  "B-013__corsola":"Corasonn","B-014__mudkip":"Hydropi","B-015__marshtomp":"Moorabbel",
+  "B-016__swampert":"Sumpex","B-017__carvanha":"Kanivanha","B-018__sharpedo":"Tohaido",
+  "B-019__barboach":"Schmerbe","B-020__whiscash":"Welsar","B-021__corphish":"Krebscorps",
+  "B-022__crawdaunt":"Krebutack","B-023__luvdisc":"Liebiskus","B-024__buizel":"Bamelin",
+  "B-025__floatzel":"Bojelin","B-026__finneon":"Finneon","B-027__lumineon":"Lumineon",
+  "B-028__frillish":"Quabbel","B-029__jellicent":"Apoquallyp","B-030__alomomola":"Mamolida",
+  "B-031__stunfisk":"Flunschlik","B-032__inkay":"Iscalar","B-033__malamar":"Calamanero",
+  "B-034__popplio":"Robball","B-035__brionne":"Marikeck","B-036__primarina":"Primarene",
+  "B-037__mareanie":"Garstella","B-038__toxapex":"Aggrostella","B-039__wimpod":"Reißlaus",
+  "B-040__golisopod":"Tectass","B-041__bruxish":"Knirfish","B-042__dhelmise":"Moruda",
+  "B-043__chewtle":"Kamehaps","B-044__drednaw":"Kamalm","B-045__pincurchin":"Britzigel",
+  "B-046__wiglett":"Schligda","B-047__wugtrio":"Schligdri","B-048__veluza":"Agiluza",
+  "B-049__phione":"Phione","B-050__manaphy":"Manaphy"
+};
+
+const ABILITY_DE = {
+  "Grow":"Düngen","Litter":"Verstreuen","Burn":"Anzünden","Water":"Bewässern",
+  "Trade":"Tauschen","Fly":"Fliegen","Search":"Aufspüren","Chop":"Holzhacken",
+  "Build":"Bauen","Recycle":"Recyceln","Generate":"Elektrisieren","Crush":"Zerkleinern",
+  "Bulldoze":"Plattwalzen","Appraise":"Begutachten","Transform":"Doppelgänger",
+  "Hype":"Motivieren","Storage":"Lagern","Dream Island":"Wunderinsel","Gather":"Aufheben",
+  "Gather Honey":"Honigsammeln","Teleport":"Teleportieren","Yawn":"Gähnen",
+  "Explode":"Sprengen","Eat":"Mampfen","Illuminate":"Erleuchten","Paint":"Anmalen",
+  "Scrub":"Putzen","Collect":"Sammeln","DJ":"Auflegen","Rarify":"Rarität","Engineer":"Werkeln","??? (unbekannt)":"? (unbekannt)"
+};
+
+const ITEM_DE = {
+  "Leaves":"Blätter","Vine rope":"Rankenseil","Sturdy stick":"Robuster Stock","Honey":"Honig",
+  "Small log":"Kleiner Stamm","Nonburnable garbage":"Unbrennbarer Müll","Stone":"Stein",
+  "Twine":"Bindfaden","Fluff":"Wolle","Squishy clay":"Weicher Ton","Iron ore":"Eisenerz",
+  "Stardust":"Sternenstaub","Seashell":"Muschel","Black Paint":"Schwarze Farbe"
+};
+function displayItem(item){
+  if(lang==="de" && ITEM_DE[item]) return ITEM_DE[item];
+  return item;
+}
+
+// Offizielle deutsche Gebietsnamen (nur für die Standard-Habitate; eigene/umbenannte Habitate bleiben wie eingegeben)
+const HABITAT_DE = {
+  "Withered Wastelands":"Welkwüstia",
+  "Bleak Beach":"Trübküstia",
+  "Rocky Ridges":"Kargbergia",
+  "Sparkling Skylands":"Glitzerwolkia",
+  "Palette Town":"Neulandia",
+  "Bubbly Basin":"Blubbmeeria"
+};
+function displayHabitat(h){
+  if(!h) return "";
+  if(lang==="de" && HABITAT_DE[h.name]) return HABITAT_DE[h.name];
+  return h.name;
+}
+
+/* ---------------------------------------------------------
+   UI-STRINGS (komplette Oberflächen-Übersetzung DE/EN)
+--------------------------------------------------------- */
+const STRINGS = {
+  de: {
+    tabPokemon:"Pokémon", tabGroups:"Gruppen & Habitate",
+    searchPlaceholder:"Pokémon suchen…",
+    btnEdit:"✎ Bearbeiten", btnDiscard:"🗑 Verwerfen", btnSave:"💾 Speichern",
+    btnExport:"⇩ Export JSON", btnImport:"⇧ Import JSON",
+    statusChecking:"Speicher wird geprüft…",
+    statusOk:"✓ gespeichert (persistent)",
+    statusWarn:"⚠ nur diese Sitzung — bitte JSON exportieren!",
+    askBeforeRemoval:"Vor Entfernen fragen",
+    discardTitle:"Änderungen verwerfen?",
+    discardText:"Alle Änderungen seit dem Start des Bearbeiten-Modus gehen unwiderruflich verloren. Wirklich verwerfen?",
+    deleteCustomPokemonTitle:"Eigenes Pokémon löschen?",
+    confirmGroupChangeTitle:"Gruppe wirklich ändern?",
+    importOverwriteTitle:"Import überschreibt aktuelle Daten",
+    fileReadErrorAlertPrefix:"Konnte Datei nicht lesen",
+    newPokeNr:"Nr. (z. B. C-001)", newPokeName:"Name",
+    newPokeAbilities:"Fähigkeit(en), kommagetrennt", newPokeLitter:"Litter-Item (optional)",
+    btnAddPokemon:"+ Pokémon anlegen",
+    filterGroupLabel:"Nach Gruppe filtern:", filterAbilityLabel:"Nach Fähigkeit:",
+    optAll:"Alle", optNoGroup:"– ohne Gruppe –",
+    thNr:"Nr.", thPokemon:"Pokémon", thAbility:"Fähigkeit(en)", thLitter:"Litter-Item",
+    thGroup:"Gruppe", thHabitat:"Habitat", thAction:"Aktion",
+    optNoneGroup:"– keine –", optNewGroup:"+ Neue Gruppe…",
+    optNoneHabitat:"– keins –", optNewHabitat:"+ Neues Habitat…",
+    customTag:"eigenes", baseData:"Basisdaten", deleteBtn:"Löschen",
+    emptyTable:"Keine Treffer.",
+    sectionGroups:"Custom-Gruppen", sectionHabitats:"Habitate",
+    newGroupName:"Name der neuen Gruppe…", newGroupDesc:"Beschreibung (optional)…",
+    btnAddGroup:"+ Gruppe anlegen",
+    newHabitatName:"Name des neuen Habitats (z. B. für DLC)…",
+    newHabitatDesc:"Beschreibung (optional)…",
+    btnAddHabitat:"+ Habitat anlegen",
+    emptyGroups:"Noch keine Gruppen angelegt. Leg oben eine an, oder weise im Pokémon-Tab direkt eine neue Gruppe zu.",
+    emptyHabitats:"Noch keine Habitate. Leg oben eins an.",
+    groupNamePh:"Gruppenname", descPh:"Beschreibung (optional)",
+    addPokeToGroup:"Pokémon zu dieser Gruppe hinzufügen",
+    addPokeToHabitat:"Pokémon in dieses Habitat setzen",
+    searchPokePh:"Pokémon suchen…",
+    deleteGroupBtn:"Gruppe löschen", deleteHabitatBtn:"Habitat löschen",
+    cancelBtn:"Abbrechen", saveBtn:"Speichern",
+    countSuffix:" Pokémon",
+    emptyMembersGroup:"Noch keine Pokémon zugewiesen.",
+    emptyMembersHabitat:"Noch keine Pokémon hier zugeordnet.",
+    habitatNamePh:"Habitatname", nomatch:"Keine Treffer.",
+    newGroupModalTitle:"Neue Gruppe anlegen", createAssign:"Erstellen & zuweisen",
+    newHabitatModalTitle:"Neues Habitat anlegen",
+    newHabitatModalDesc:"Z. B. für ein noch kommendes DLC-Gebiet. Steht danach für alle Pokémon zur Auswahl.",
+    habitatNameModalPh:"Name des Habitats",
+    confirmBtn:"Bestätigen",
+    dropzoneText:"⇩ JSON-Backup hier ablegen zum Importieren",
+    footer:"Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup",
+    wip:"◐ WIP", done:"✓ DONE",
+  },
+  en: {
+    tabPokemon:"Pokémon", tabGroups:"Groups & Habitats",
+    searchPlaceholder:"Search Pokémon…",
+    btnEdit:"✎ Edit", btnDiscard:"🗑 Discard", btnSave:"💾 Save",
+    btnExport:"⇩ Export JSON", btnImport:"⇧ Import JSON",
+    statusChecking:"Checking storage…",
+    statusOk:"✓ saved (persistent)",
+    statusWarn:"⚠ this session only — please export JSON!",
+    askBeforeRemoval:"Ask before removal",
+    discardTitle:"Discard changes?",
+    discardText:"All changes made since entering edit mode will be permanently lost. Really discard?",
+    deleteCustomPokemonTitle:"Delete custom Pokémon?",
+    confirmGroupChangeTitle:"Really change group?",
+    importOverwriteTitle:"Import will overwrite current data",
+    fileReadErrorAlertPrefix:"Could not read file",
+    newPokeNr:"No. (e.g. C-001)", newPokeName:"Name",
+    newPokeAbilities:"Ability/abilities, comma-separated", newPokeLitter:"Litter item (optional)",
+    btnAddPokemon:"+ Add Pokémon",
+    filterGroupLabel:"Filter by group:", filterAbilityLabel:"Filter by ability:",
+    optAll:"All", optNoGroup:"– no group –",
+    thNr:"No.", thPokemon:"Pokémon", thAbility:"Abilit(y/ies)", thLitter:"Litter item",
+    thGroup:"Group", thHabitat:"Habitat", thAction:"Action",
+    optNoneGroup:"– none –", optNewGroup:"+ New group…",
+    optNoneHabitat:"– none –", optNewHabitat:"+ New habitat…",
+    customTag:"custom", baseData:"base data", deleteBtn:"Delete",
+    emptyTable:"No results.",
+    sectionGroups:"Custom groups", sectionHabitats:"Habitats",
+    newGroupName:"Name of new group…", newGroupDesc:"Description (optional)…",
+    btnAddGroup:"+ Add group",
+    newHabitatName:"Name of new habitat (e.g. for DLC)…",
+    newHabitatDesc:"Description (optional)…",
+    btnAddHabitat:"+ Add habitat",
+    emptyGroups:"No groups yet. Add one above, or assign a new group directly from the Pokémon tab.",
+    emptyHabitats:"No habitats yet. Add one above.",
+    groupNamePh:"Group name", descPh:"Description (optional)",
+    addPokeToGroup:"Add Pokémon to this group",
+    addPokeToHabitat:"Add Pokémon to this habitat",
+    searchPokePh:"Search Pokémon…",
+    deleteGroupBtn:"Delete group", deleteHabitatBtn:"Delete habitat",
+    cancelBtn:"Cancel", saveBtn:"Save",
+    countSuffix:" Pokémon",
+    emptyMembersGroup:"No Pokémon assigned yet.",
+    emptyMembersHabitat:"No Pokémon assigned here yet.",
+    habitatNamePh:"Habitat name", nomatch:"No matches.",
+    newGroupModalTitle:"Create new group", createAssign:"Create & assign",
+    newHabitatModalTitle:"Create new habitat",
+    newHabitatModalDesc:"E.g. for an upcoming DLC area. Will then be available for all Pokémon.",
+    habitatNameModalPh:"Habitat name",
+    confirmBtn:"Confirm",
+    dropzoneText:"⇩ Drop JSON backup here to import",
+    footer:"Data lives locally in this tool (window.storage) · Exporting as backup is recommended",
+    wip:"◐ WIP", done:"✓ DONE",
+  }
+};
+function t(key){ return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key; }
+
+/* Zweisprachige dynamische Bestätigungstexte (mit Interpolation, daher als Funktionen statt STRINGS-Einträge) */
+function textDeleteCustomPokemon(pokeName){
+  return lang==="de"
+    ? `„${pokeName}“ und seine Gruppen-/Habitat-Zuordnung wirklich entfernen?`
+    : `Really remove "${pokeName}" and its group/habitat assignment?`;
+}
+function textGroupChange(pokemonName, fromName, toName){
+  const toLabel = toName ? `„${toName}“` : t("optNoneGroup");
+  return lang==="de"
+    ? `${pokemonName} ist aktuell in „${fromName}“. Wirklich zu ${toLabel} verschieben?`
+    : `${pokemonName} is currently in "${fromName}". Really move to ${toName?`"${toName}"`:t("optNoneGroup")}?`;
+}
+function textGroupChangeNew(pokemonName, fromName, newGroupName){
+  return lang==="de"
+    ? `${pokemonName} ist aktuell in „${fromName}“. Wirklich zu neuer Gruppe „${newGroupName}“ verschieben?`
+    : `${pokemonName} is currently in "${fromName}". Really move to new group "${newGroupName}"?`;
+}
+function textGroupDelete(groupName, memberCount){
+  return lang==="de"
+    ? `„${groupName}“ wirklich löschen? ${memberCount} zugewiesene Pokémon verlieren dabei ihre Gruppenzuordnung (Habitat bleibt erhalten).`
+    : `Really delete "${groupName}"? ${memberCount} assigned Pokémon will lose their group assignment (habitat stays intact).`;
+}
+function textRemoveFromGroup(pokemonName, groupName){
+  return lang==="de"
+    ? `${pokemonName} wirklich aus „${groupName}“ entfernen?`
+    : `Really remove ${pokemonName} from "${groupName}"?`;
+}
+function textHabitatDelete(habitatName, memberCount){
+  return lang==="de"
+    ? `„${habitatName}“ wirklich löschen? ${memberCount} Pokémon verlieren dabei ihre Habitat-Zuordnung.`
+    : `Really delete "${habitatName}"? ${memberCount} Pokémon will lose their habitat assignment.`;
+}
+function textRemoveFromHabitat(pokemonName, habitatName){
+  return lang==="de"
+    ? `${pokemonName} wirklich aus „${habitatName}“ entfernen?`
+    : `Really remove ${pokemonName} from "${habitatName}"?`;
+}
+function textImportOverwrite(groupsN, habitatsN, customN, assignN){
+  return lang==="de"
+    ? `Datei enthält ${groupsN} Gruppen, ${habitatsN} Habitate, ${customN} eigene Pokémon und ${assignN} Zuordnungen. Aktuelle Daten wirklich ersetzen?`
+    : `File contains ${groupsN} groups, ${habitatsN} habitats, ${customN} custom Pokémon and ${assignN} assignments. Really replace current data?`;
+}
+function textFileReadError(msg){
+  return lang==="de" ? `Konnte Datei nicht lesen: ${msg}` : `Could not read file: ${msg}`;
+}
+
+/* ---------------------------------------------------------
+   UI-STRINGS auf statische Elemente anwenden
+--------------------------------------------------------- */
+function applyI18n(){
+  const setText = (id, key) => { const el = document.getElementById(id); if(el) el.textContent = t(key); };
+  const setPh = (id, key) => { const el = document.getElementById(id); if(el) el.placeholder = t(key); };
+
+  setText("tab-pokemon", "tabPokemon");
+  setText("tab-groups", "tabGroups");
+  setPh("search", "searchPlaceholder");
+  setText("btn-editmode", "btnEdit");
+  setText("btn-export", "btnExport");
+  setText("btn-import", "btnImport");
+  setText("btn-discard", "btnDiscard");
+  setText("btn-save", "btnSave");
+  setText("ask-before-removal-text", "askBeforeRemoval");
+
+  setPh("new-poke-nr", "newPokeNr");
+  setPh("new-poke-name", "newPokeName");
+  setPh("new-poke-abilities", "newPokeAbilities");
+  setPh("new-poke-litter", "newPokeLitter");
+  setText("btn-add-pokemon", "btnAddPokemon");
+  setText("lbl-filter-group", "filterGroupLabel");
+  setText("lbl-filter-ability", "filterAbilityLabel");
+
+  setText("th-nr", "thNr");
+  setText("th-pokemon", "thPokemon");
+  setText("th-ability", "thAbility");
+  setText("th-litter", "thLitter");
+  setText("th-group", "thGroup");
+  setText("th-habitat", "thHabitat");
+  setText("th-action", "thAction");
+
+  document.querySelectorAll('#filter-group option[value=""]').forEach(o=>o.textContent = t("optAll"));
+  document.querySelectorAll('#filter-group option[value="__none__"]').forEach(o=>o.textContent = t("optNoGroup"));
+  document.querySelectorAll('#filter-ability option[value=""]').forEach(o=>o.textContent = t("optAll"));
+
+  setText("sec-groups-title", "sectionGroups");
+  setPh("new-group-name", "newGroupName");
+  setPh("new-group-desc", "newGroupDesc");
+  setText("btn-add-group", "btnAddGroup");
+  setText("sec-habitats-title", "sectionHabitats");
+  setPh("new-habitat-name", "newHabitatName");
+  setPh("new-habitat-desc", "newHabitatDesc");
+  setText("btn-add-habitat", "btnAddHabitat");
+
+  const dz = document.querySelector("#dropzone .dropzone-inner");
+  if(dz) dz.textContent = t("dropzoneText");
+  const ft = document.querySelector("footer");
+  if(ft) ft.textContent = t("footer");
+}
+
+function displayName(p){
+  if(lang==="de" && NAME_DE[p.id]) return NAME_DE[p.id];
+  return p.name;
+}
+function displayAbility(a){
+  if(lang==="de" && ABILITY_DE[a]) return ABILITY_DE[a];
+  return a;
+}
+function tooltipText(p){
+  return p.abilities.map(a=>{
+    const label = displayAbility(a);
+    if(a === "Litter" && p.litterItem) return `${label} (${displayItem(p.litterItem)})`;
+    return label;
+  }).join(", ");
+}
+
+/* ---------------------------------------------------------
+   STATE + STORAGE
+--------------------------------------------------------- */
+let lang = "en"; // 'de' | 'en' — Anzeigesprache für Pokémon-Namen & Fähigkeiten
+let groups = [];       // {id,name,color,description}
+let assignments = {};  // pokemonId -> {groupId, habitatId}
+let habitats = [];     // {id,name,description} — erweiterbar
+let customPokemon = []; // selbst angelegte Pokémon, gleiche Form wie POKEMON_DATA + custom:true
+let editMode = false;
+let storageMode = "checking"; // 'window' | 'memory'
+
+const DEFAULT_HABITATS = [
+  {name:"Withered Wastelands", description:""},
+  {name:"Bleak Beach", description:""},
+  {name:"Rocky Ridges", description:""},
+  {name:"Sparkling Skylands", description:""},
+  {name:"Palette Town", description:""},
+  {name:"Bubbly Basin", description:"Deutscher Name: Blubbmeeria"}
+].map(({name,description}) => ({id: uidStatic(name), name, description}));
+
+// stabile IDs für die Default-Habitate, damit sie bei jedem Neustart gleich bleiben
+function uidStatic(seed){
+  return "default__" + seed.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+}
+
+const KEY_GROUPS = "pokopia:groups";
+const KEY_ASSIGN = "pokopia:assignments";
+const KEY_HABITATS = "pokopia:habitats";
+const KEY_CUSTOM_POKEMON = "pokopia:custom-pokemon";
+const KEY_LANG = "pokopia:lang";
+
+async function initStorage(){
+  const statusEl = document.getElementById("status");
+  try{
+    if(window.storage){
+      const g = await safeGet(KEY_GROUPS);
+      const a = await safeGet(KEY_ASSIGN);
+      const h = await safeGet(KEY_HABITATS);
+      const cp = await safeGet(KEY_CUSTOM_POKEMON);
+      const l = await safeGet(KEY_LANG);
+      groups = g ? JSON.parse(g) : [];
+      assignments = a ? JSON.parse(a) : {};
+      habitats = h ? JSON.parse(h) : [...DEFAULT_HABITATS];
+      customPokemon = cp ? JSON.parse(cp) : [];
+      lang = l || "en";
+      storageMode = "window";
+      statusEl.textContent = t("statusOk");
+      statusEl.className = "ok";
+    } else if(typeof localStorage !== "undefined"){
+      const g = localStorage.getItem(KEY_GROUPS);
+      const a = localStorage.getItem(KEY_ASSIGN);
+      const h = localStorage.getItem(KEY_HABITATS);
+      const cp = localStorage.getItem(KEY_CUSTOM_POKEMON);
+      const l = localStorage.getItem(KEY_LANG);
+      groups = g ? JSON.parse(g) : [];
+      assignments = a ? JSON.parse(a) : {};
+      habitats = h ? JSON.parse(h) : [...DEFAULT_HABITATS];
+      customPokemon = cp ? JSON.parse(cp) : [];
+      lang = l || "en";
+      storageMode = "local";
+      statusEl.textContent = t("statusOk");
+      statusEl.className = "ok";
+    } else {
+      throw new Error("Kein Speicher verfügbar");
+    }
+  }catch(e){
+    storageMode = "memory";
+    groups = [];
+    assignments = {};
+    habitats = [...DEFAULT_HABITATS];
+    customPokemon = [];
+    statusEl.textContent = t("statusWarn");
+    statusEl.className = "warn";
+  }
+  migrateData();
+}
+
+// alte Datenformate (Habitat als reiner String) sauber überführen
+function migrateData(){
+  // Gruppen: description- und status-Feld sicherstellen
+  groups.forEach(g=>{
+    if(g.description === undefined) g.description = "";
+    if(g.status === undefined) g.status = "wip";
+  });
+
+  // Habitate: falls noch als Strings gespeichert -> in Objekte {id,name,description} wandeln
+  if(habitats.length && typeof habitats[0] === "string"){
+    habitats = habitats.map(name => ({id: uidStatic(name)+"__"+uid(), name, description:""}));
+  }
+  habitats.forEach(h=>{ if(h.description === undefined) h.description = ""; });
+
+  // Update: alte/fehlerhafte Platzhalternamen -> offizieller DLC-Name (Bubbly Basin), Blubbmeeria als deutscher Name in der Beschreibung
+  const oldNames = ["Bubbly Basin (DLC)", "Blubbmeeria"];
+  const oldPlaceholder = habitats.find(h=>oldNames.includes(h.name));
+  if(oldPlaceholder){
+    oldPlaceholder.name = "Bubbly Basin";
+    if(!oldPlaceholder.description) oldPlaceholder.description = "Deutscher Name: Blubbmeeria";
+  } else if(!habitats.some(h=>h.name === "Bubbly Basin")){
+    habitats.push({id: uidStatic("Bubbly Basin"), name: "Bubbly Basin", description: "Deutscher Name: Blubbmeeria"});
+  }
+
+  // Zuordnungen: altes assign.habitat (String) -> neues assign.habitatId
+  Object.keys(assignments).forEach(pid=>{
+    const a = assignments[pid];
+    if(a && a.habitat && !a.habitatId){
+      let match = habitats.find(h=>h.name === a.habitat);
+      if(!match){
+        match = {id: uid(), name: a.habitat, description:""};
+        habitats.push(match);
+      }
+      a.habitatId = match.id;
+      delete a.habitat;
+    }
+  });
+}
+
+async function safeGet(key){
+  try{
+    const res = await window.storage.get(key,false);
+    return res ? res.value : null;
+  }catch(e){ return null; }
+}
+async function persist(force){
+  if(editMode && !force) return; // Draft-Modus: erst bei "Speichern" wirklich schreiben
+  try{
+    if(storageMode === "window"){
+      await window.storage.set(KEY_GROUPS, JSON.stringify(groups), false);
+      await window.storage.set(KEY_ASSIGN, JSON.stringify(assignments), false);
+      await window.storage.set(KEY_HABITATS, JSON.stringify(habitats), false);
+      await window.storage.set(KEY_CUSTOM_POKEMON, JSON.stringify(customPokemon), false);
+      await window.storage.set(KEY_LANG, lang, false);
+    } else if(storageMode === "local"){
+      localStorage.setItem(KEY_GROUPS, JSON.stringify(groups));
+      localStorage.setItem(KEY_ASSIGN, JSON.stringify(assignments));
+      localStorage.setItem(KEY_HABITATS, JSON.stringify(habitats));
+      localStorage.setItem(KEY_CUSTOM_POKEMON, JSON.stringify(customPokemon));
+      localStorage.setItem(KEY_LANG, lang);
+    }
+  }catch(e){
+    console.error("Speichern fehlgeschlagen", e);
+  }
+}
+
+let editSnapshot = null; // Zustand beim Betreten des Edit-Modus, für "Verwerfen"
+let askBeforeRemoval = true; // Steuerung des X-Entfernen-Bestätigungsdialogs im Edit-Modus
+
+/* ---------------------------------------------------------
+   HELPERS
+--------------------------------------------------------- */
+function groupById(id){ return groups.find(g=>g.id===id); }
+function habitatById(id){ return habitats.find(h=>h.id===id); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function getAllPokemon(){
+  return POKEMON_DATA.concat(customPokemon);
+}
+
+function allAbilities(){
+  const s = new Set();
+  getAllPokemon().forEach(p=>p.abilities.forEach(a=>s.add(a)));
+  return [...s].sort();
+}
+
+/* ---------------------------------------------------------
+   RENDER: FILTER DROPDOWNS
+--------------------------------------------------------- */
+function renderFilterDropdowns(){
+  const gSel = document.getElementById("filter-group");
+  const current = gSel.value;
+  gSel.innerHTML = '<option value="">Alle</option><option value="__none__">– ohne Gruppe –</option>' +
+    groups.map(g=>`<option value="${g.id}">${escapeHtml(g.name)}</option>`).join("");
+  gSel.value = current && [...gSel.options].some(o=>o.value===current) ? current : "";
+
+  const aSel = document.getElementById("filter-ability");
+  const currentA = aSel.value;
+  aSel.innerHTML = '<option value="">Alle</option>' +
+    allAbilities().map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(displayAbility(a))}</option>`).join("");
+  aSel.value = currentA && [...aSel.options].some(o=>o.value===currentA) ? currentA : "";
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ---------------------------------------------------------
+   RENDER: POKÉMON TABLE
+--------------------------------------------------------- */
+function renderPokemonTable(){
+  const tbody = document.getElementById("pokemon-tbody");
+  const search = document.getElementById("search").value.trim().toLowerCase();
+  const filterGroup = document.getElementById("filter-group").value;
+  const filterAbility = document.getElementById("filter-ability").value;
+
+  const rows = getAllPokemon().filter(p=>{
+    if(search){
+      const nameDe = (NAME_DE[p.id]||"").toLowerCase();
+      const matches = p.name.toLowerCase().includes(search) || nameDe.includes(search) || p.nr.toLowerCase().includes(search);
+      if(!matches) return false;
+    }
+    if(filterAbility && !p.abilities.includes(filterAbility)) return false;
+    const assign = assignments[p.id];
+    if(filterGroup === "__none__" && assign && assign.groupId) return false;
+    if(filterGroup && filterGroup !== "__none__" && (!assign || assign.groupId !== filterGroup)) return false;
+    return true;
+  });
+
+  const colCount = editMode ? 7 : 6;
+  if(rows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty-state">${t("emptyTable")}</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(p=>{
+    const assign = assignments[p.id] || {};
+    const g = assign.groupId ? groupById(assign.groupId) : null;
+    const h = assign.habitatId ? habitatById(assign.habitatId) : null;
+
+    const options = [`<option value="">${t("optNoneGroup")}</option>`]
+      .concat(groups.map(gr=>`<option value="${gr.id}" ${assign.groupId===gr.id?"selected":""}>${escapeHtml(gr.name)}</option>`))
+      .concat([`<option value="__new__">${t("optNewGroup")}</option>`]);
+
+    const habitatOptions = [`<option value="">${t("optNoneHabitat")}</option>`]
+      .concat(habitats.map(hh=>`<option value="${hh.id}" ${assign.habitatId===hh.id?"selected":""}>${escapeHtml(displayHabitat(hh))}</option>`))
+      .concat([`<option value="__new__">${t("optNewHabitat")}</option>`]);
+
+    return `
+      <tr data-id="${p.id}">
+        <td class="nr">${escapeHtml(p.nr)}</td>
+        <td class="name">${escapeHtml(displayName(p))}${p.custom?` <span class="customtag">${t("customTag")}</span>`:''}</td>
+        <td class="abilities">${p.abilities.map(a=>escapeHtml(displayAbility(a))).join(", ")}</td>
+        <td class="litem">${p.litterItem ? escapeHtml(displayItem(p.litterItem)) : "–"}</td>
+        <td>
+          ${g ? `<button type="button" class="badge badgebtn" data-badge-for="${p.id}" style="background:${g.color}22;border-color:${g.color};color:${g.color};"><span class="dot" style="background:${g.color};"></span>${escapeHtml(g.name)}</button>` : ""}
+          <select class="groupselect" data-id="${p.id}" ${g?'style="display:none;"':''}>${options.join("")}</select>
+        </td>
+        <td>
+          <select class="habitatselect" data-id="${p.id}">${habitatOptions.join("")}</select>
+        </td>
+        ${editMode ? `<td>${p.custom ? `<button class="dangerbtn small" data-delpoke="${p.id}">${t("deleteBtn")}</button>` : `<span style="color:var(--text-dim);font-size:11px;">${t("baseData")}</span>`}</td>` : ""}
+      </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll("select.groupselect").forEach(sel=>{
+    sel.addEventListener("change", onGroupSelectChange);
+  });
+  tbody.querySelectorAll("button.badgebtn").forEach(badge=>{
+    badge.addEventListener("click", ()=>{
+      const pokeId = badge.dataset.badgeFor;
+      const row = tbody.querySelector(`tr[data-id="${CSS.escape(pokeId)}"]`);
+      if(!row) return;
+      const sel = row.querySelector("select.groupselect");
+      if(!sel) return;
+      badge.style.display = "none";
+      sel.style.display = "";
+      sel.focus();
+      if(typeof sel.showPicker === "function"){
+        try{ sel.showPicker(); }catch(e){}
+      }
+      const revert = ()=>{
+        sel.style.display = "none";
+        badge.style.display = "";
+        sel.removeEventListener("blur", revert);
+      };
+      sel.addEventListener("blur", revert);
+    });
+  });
+  tbody.querySelectorAll("select.habitatselect").forEach(sel=>{
+    sel.addEventListener("change", onHabitatSelectChange);
+  });
+  tbody.querySelectorAll("button[data-delpoke]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.dataset.delpoke;
+      const poke = customPokemon.find(p=>p.id===id);
+      showConfirm({
+        title:t("deleteCustomPokemonTitle"),
+        text:textDeleteCustomPokemon(poke.name),
+        onConfirm: ()=>{
+          customPokemon = customPokemon.filter(p=>p.id!==id);
+          delete assignments[id];
+          persist();
+          renderPokemonTable();
+          renderFilterDropdowns();
+          renderGroupsView();
+          renderHabitatsView();
+        }
+      });
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   GRUPPEN-ZUWEISUNG (aus der Pokémon-Tabelle)
+--------------------------------------------------------- */
+function onGroupSelectChange(e){
+  const sel = e.target;
+  const pokeId = sel.dataset.id;
+  const newVal = sel.value;
+  const current = assignments[pokeId] || {};
+  const pokemon = getAllPokemon().find(p=>p.id===pokeId);
+
+  if(newVal === "__new__"){
+    sel.value = current.groupId || "";
+    openNewGroupModal(pokemon, current.groupId);
+    return;
+  }
+  if(!current.groupId && !newVal) return;
+  if(current.groupId === newVal) return;
+
+  if(!current.groupId){
+    assignPokemonToGroup(pokemon.id, newVal || null);
+    return;
+  }
+
+  const fromGroup = groupById(current.groupId);
+  const toGroup = newVal ? groupById(newVal) : null;
+  showConfirm({
+    title: t("confirmGroupChangeTitle"),
+    text: textGroupChange(displayName(pokemon), fromGroup ? fromGroup.name : "?", toGroup ? toGroup.name : null),
+    onConfirm: ()=> assignPokemonToGroup(pokemon.id, newVal || null),
+    onCancel: ()=> { sel.value = current.groupId; }
+  });
+}
+
+function assignPokemonToGroup(pokeId, groupId){
+  assignments[pokeId] = assignments[pokeId] || {};
+  assignments[pokeId].groupId = groupId || null;
+  persist();
+  renderPokemonTable();
+  renderGroupsView();
+}
+
+function openNewGroupModal(pokemonToAssign, currentGroupId){
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${t("newGroupModalTitle")}</h3>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+        <input type="color" id="modal-color" value="#7dd3c0">
+        <input type="text" id="modal-name" placeholder="${t('groupNamePh')}" style="flex:1;">
+      </div>
+      <input type="text" id="modal-desc" placeholder="${t('descPh')}" style="width:100%;margin-bottom:16px;">
+      <div class="row">
+        <button class="ghostbtn" id="modal-cancel">${t("cancelBtn")}</button>
+        <button class="primarybtn" id="modal-create">${t("createAssign")}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const nameInput = overlay.querySelector("#modal-name");
+  nameInput.focus();
+
+  overlay.querySelector("#modal-cancel").onclick = ()=>{
+    overlay.remove();
+    if(pokemonToAssign) renderPokemonTable();
+  };
+  overlay.querySelector("#modal-create").onclick = ()=>{
+    const name = nameInput.value.trim();
+    const color = overlay.querySelector("#modal-color").value;
+    const description = overlay.querySelector("#modal-desc").value.trim();
+    if(!name){ nameInput.focus(); return; }
+    const newGroup = {id: uid(), name, color, description, status: "wip"};
+    groups.push(newGroup);
+    overlay.remove();
+
+    const finalize = ()=>{
+      if(pokemonToAssign) assignPokemonToGroup(pokemonToAssign.id, newGroup.id);
+      persist();
+      renderFilterDropdowns();
+      renderGroupsView();
+    };
+
+    if(pokemonToAssign && currentGroupId){
+      const fromGroup = groupById(currentGroupId);
+      showConfirm({
+        title:t("confirmGroupChangeTitle"),
+        text:textGroupChangeNew(displayName(pokemonToAssign), fromGroup ? fromGroup.name : "?", name),
+        onConfirm: finalize,
+        onCancel: ()=>{ persist(); renderFilterDropdowns(); renderGroupsView(); renderPokemonTable(); }
+      });
+    } else {
+      finalize();
+    }
+  };
+}
+
+/* ---------------------------------------------------------
+   HABITAT-ZUWEISUNG (aus der Pokémon-Tabelle)
+--------------------------------------------------------- */
+function onHabitatSelectChange(e){
+  const sel = e.target;
+  const pokeId = sel.dataset.id;
+  const val = sel.value;
+
+  if(val === "__new__"){
+    const current = (assignments[pokeId] && assignments[pokeId].habitatId) || "";
+    sel.value = current;
+    openNewHabitatModal(pokeId);
+    return;
+  }
+
+  assignments[pokeId] = assignments[pokeId] || {};
+  assignments[pokeId].habitatId = val || null;
+  persist();
+  renderHabitatsView();
+}
+
+function openNewHabitatModal(pokeId){
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${t("newHabitatModalTitle")}</h3>
+      <p>${t("newHabitatModalDesc")}</p>
+      <input type="text" id="modal-habitat-name" placeholder="${t('habitatNameModalPh')}" style="width:100%;margin-bottom:10px;">
+      <input type="text" id="modal-habitat-desc" placeholder="${t('descPh')}" style="width:100%;margin-bottom:16px;">
+      <div class="row">
+        <button class="ghostbtn" id="modal-habitat-cancel">${t("cancelBtn")}</button>
+        <button class="primarybtn" id="modal-habitat-create">${t("createAssign")}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector("#modal-habitat-name");
+  input.focus();
+
+  overlay.querySelector("#modal-habitat-cancel").onclick = ()=>{
+    overlay.remove();
+    if(pokeId) renderPokemonTable();
+  };
+  overlay.querySelector("#modal-habitat-create").onclick = ()=>{
+    const name = input.value.trim();
+    const description = overlay.querySelector("#modal-habitat-desc").value.trim();
+    if(!name){ input.focus(); return; }
+    const newHabitat = {id: uid(), name, description};
+    habitats.push(newHabitat);
+    if(pokeId){
+      assignments[pokeId] = assignments[pokeId] || {};
+      assignments[pokeId].habitatId = newHabitat.id;
+    }
+    overlay.remove();
+    persist();
+    renderPokemonTable();
+    renderHabitatsView();
+  };
+}
+
+/* ---------------------------------------------------------
+   CONFIRM MODAL (generic)
+--------------------------------------------------------- */
+function showConfirm({title, text, onConfirm, onCancel}){
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(text)}</p>
+      <div class="row">
+        <button class="ghostbtn" id="c-cancel">${t("cancelBtn")}</button>
+        <button class="primarybtn" id="c-confirm">${t("confirmBtn")}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector("#c-cancel").onclick = ()=>{ overlay.remove(); onCancel && onCancel(); };
+  overlay.querySelector("#c-confirm").onclick = ()=>{ overlay.remove(); onConfirm && onConfirm(); };
+}
+
+/* ---------------------------------------------------------
+   GRUPPEN-ANSICHT (Bearbeitung läuft komplett über den globalen Edit-Mode)
+--------------------------------------------------------- */
+function renderGroupsView(){
+  const grid = document.getElementById("groups-grid");
+  if(groups.length === 0){
+    grid.innerHTML = `<div class="empty-state">${t("emptyGroups")}</div>`;
+    return;
+  }
+  grid.innerHTML = groups.map(g=>{
+    const members = getAllPokemon().filter(p=> assignments[p.id] && assignments[p.id].groupId === g.id);
+
+    const headHtml = editMode ? `
+      <div class="colorname">
+        <input type="color" class="edit-color" data-gid="${g.id}" value="${g.color}">
+        <input type="text" class="edit-name" data-gid="${g.id}" value="${escapeHtml(g.name)}" placeholder="${t('groupNamePh')}">
+      </div>` : `<h3><span class="dot" style="background:${g.color};"></span>${escapeHtml(g.name)}</h3>`;
+
+    const descHtml = editMode
+      ? `<input type="text" class="edit-desc inline-desc" data-gid="${g.id}" value="${escapeHtml(g.description||"")}" placeholder="${t('descPh')}">`
+      : (g.description ? `<div class="desc">${escapeHtml(g.description)}</div>` : "");
+
+    const memberListHtml = members.length ? `<ul>${members.map(m=>{
+      const assign = assignments[m.id]||{};
+      const hb = assign.habitatId ? habitatById(assign.habitatId) : null;
+      const habitatCell = editMode
+        ? `<select class="member-habitat" data-pid="${m.id}">${['<option value="">–</option>'].concat(habitats.map(hh=>`<option value="${hh.id}" ${assign.habitatId===hh.id?"selected":""}>${escapeHtml(displayHabitat(hh))}</option>`)).join("")}</select>`
+        : (hb ? `<span class="hab">${escapeHtml(displayHabitat(hb))}</span>` : "");
+      return `<li data-pid="${m.id}" ${editMode?'draggable="true"':""}>
+        <span class="member-main">
+          <span class="member-name">${escapeHtml(displayName(m))}</span>
+          <span class="member-abilities">· ${escapeHtml(tooltipText(m))}</span>
+        </span>
+        <span class="member-right">${habitatCell}${editMode?`<button type="button" class="removepoke" data-pid="${m.id}" data-group="${g.id}" title="${t('deleteBtn')}">×</button>`:""}</span>
+      </li>`;
+    }).join("")}</ul>` : `<div class="empty">${t("emptyMembersGroup")}</div>`;
+
+    return `
+      <div class="groupcard" style="border-top-color:${g.color};" data-gid="${g.id}">
+        <div class="cardhead">
+          ${headHtml}
+          <div class="cardhead-actions">
+            <button class="statusbtn ${g.status==='done'?'done':'wip'}" data-toggle-status="${g.id}">${g.status==='done'?t('done'):t('wip')}</button>
+          </div>
+        </div>
+        ${descHtml}
+        <div class="count">${members.length}${t("countSuffix")}</div>
+        ${memberListHtml}
+        ${editMode ? `
+          <div class="addpoke">
+            <label>${t("addPokeToGroup")}</label>
+            <input type="text" class="addpoke-search" placeholder="${t('searchPokePh')}">
+            <div class="addpoke-results"></div>
+          </div>
+          <div class="editrow">
+            <button class="dangerbtn" data-delete-group="${g.id}">${t("deleteGroupBtn")}</button>
+          </div>` : ""}
+      </div>`;
+  }).join("");
+
+  grid.querySelectorAll("[data-toggle-status]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const g = groupById(btn.dataset.toggleStatus);
+      g.status = g.status === "done" ? "wip" : "done";
+      persist();
+      renderGroupsView();
+    });
+  });
+
+  // Inline-Bearbeitung Name/Farbe/Beschreibung (auto-save on change)
+  grid.querySelectorAll(".edit-name, .edit-color, .edit-desc").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const g = groupById(el.dataset.gid);
+      if(!g) return;
+      const card = grid.querySelector(`.groupcard[data-gid="${g.id}"]`);
+      const nameInput = card.querySelector(".edit-name");
+      const name = nameInput.value.trim();
+      if(!name){ nameInput.focus(); return; }
+      g.name = name;
+      g.color = card.querySelector(".edit-color").value;
+      g.description = card.querySelector(".edit-desc").value.trim();
+      persist();
+      renderGroupsView();
+      renderFilterDropdowns();
+      renderPokemonTable();
+    });
+  });
+
+  grid.querySelectorAll("[data-delete-group]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const gid = btn.dataset.deleteGroup;
+      const g = groupById(gid);
+      const memberCount = getAllPokemon().filter(p=> assignments[p.id] && assignments[p.id].groupId === gid).length;
+      showConfirm({
+        title: t("deleteGroupBtn") + "?",
+        text: textGroupDelete(g.name, memberCount),
+        onConfirm: ()=>{
+          groups = groups.filter(x=>x.id!==gid);
+          Object.keys(assignments).forEach(pid=>{
+            if(assignments[pid].groupId === gid) assignments[pid].groupId = null;
+          });
+          persist();
+          renderGroupsView();
+          renderFilterDropdowns();
+          renderPokemonTable();
+        }
+      });
+    });
+  });
+
+  // X: Pokémon aus Gruppe entfernen (nur im Edit-Mode sichtbar; Bestätigung je nach "Vor Entfernen fragen")
+  grid.querySelectorAll(".removepoke").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const pid = btn.dataset.pid;
+      const gid = btn.dataset.group;
+      const pokemon = getAllPokemon().find(p=>p.id===pid);
+      const g = groupById(gid);
+      const doRemove = ()=>{
+        assignments[pid] = assignments[pid] || {};
+        assignments[pid].groupId = null;
+        persist();
+        renderGroupsView();
+        renderFilterDropdowns();
+        renderPokemonTable();
+      };
+      if(!askBeforeRemoval){
+        doRemove();
+      } else {
+        showConfirm({
+          title: t("deleteBtn") + "?",
+          text: textRemoveFromGroup(displayName(pokemon), g.name),
+          onConfirm: doRemove
+        });
+      }
+    });
+  });
+
+  // Habitat-Dropdown pro Mitglied (nur im Edit-Mode sichtbar)
+  grid.querySelectorAll(".member-habitat").forEach(sel=>{
+    sel.addEventListener("change", ()=>{
+      const pid = sel.dataset.pid;
+      assignments[pid] = assignments[pid] || {};
+      assignments[pid].habitatId = sel.value || null;
+      persist();
+      renderHabitatsView();
+    });
+  });
+
+  // Drag & Drop zwischen Gruppen-Karten (nur im Edit-Mode aktiv, da li nur dann draggable ist)
+  grid.querySelectorAll(".groupcard li[draggable]").forEach(li=>{
+    li.addEventListener("dragstart", (e)=>{
+      e.dataTransfer.setData("text/plain", li.dataset.pid);
+      li.classList.add("dragging");
+    });
+    li.addEventListener("dragend", ()=> li.classList.remove("dragging"));
+  });
+  grid.querySelectorAll(".groupcard").forEach(card=>{
+    card.addEventListener("dragover", (e)=>{
+      if(!editMode) return;
+      e.preventDefault();
+      card.classList.add("drag-over");
+    });
+    card.addEventListener("dragleave", ()=> card.classList.remove("drag-over"));
+    card.addEventListener("drop", (e)=>{
+      if(!editMode) return;
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      const pid = e.dataTransfer.getData("text/plain");
+      if(!pid) return;
+      const gid = card.dataset.gid;
+      assignments[pid] = assignments[pid] || {};
+      if(assignments[pid].groupId === gid) return;
+      assignments[pid].groupId = gid;
+      persist();
+      renderGroupsView();
+      renderFilterDropdowns();
+      renderPokemonTable();
+    });
+  });
+
+  // Pokémon-Suche zum Hinzufügen (nur im Edit-Mode sichtbar)
+  grid.querySelectorAll(".groupcard").forEach(card=>{
+    const gid = card.dataset.gid;
+    const searchInput = card.querySelector(".addpoke-search");
+    const resultsEl = card.querySelector(".addpoke-results");
+    if(!searchInput) return;
+    searchInput.addEventListener("input", ()=>{
+      renderAddPokeResults(searchInput.value, resultsEl, (pokemon)=>{
+        const current = assignments[pokemon.id] || {};
+        if(current.groupId === gid) return;
+        if(!current.groupId){
+          assignPokemonToGroup(pokemon.id, gid);
+          renderGroupsView();
+          renderFilterDropdowns();
+        } else {
+          const fromGroup = groupById(current.groupId);
+          showConfirm({
+            title: t("confirmGroupChangeTitle"),
+            text: textGroupChange(displayName(pokemon), fromGroup ? fromGroup.name : "?", groupById(gid).name),
+            onConfirm: ()=>{
+              assignPokemonToGroup(pokemon.id, gid);
+              renderGroupsView();
+              renderFilterDropdowns();
+            }
+          });
+        }
+      });
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   HABITAT-ANSICHT (Bearbeitung läuft komplett über den globalen Edit-Mode)
+--------------------------------------------------------- */
+function renderHabitatsView(){
+  const grid = document.getElementById("habitats-grid");
+  if(habitats.length === 0){
+    grid.innerHTML = `<div class="empty-state">${t("emptyHabitats")}</div>`;
+    return;
+  }
+  grid.innerHTML = habitats.map(h=>{
+    const members = getAllPokemon().filter(p=> assignments[p.id] && assignments[p.id].habitatId === h.id);
+
+    const headHtml = editMode
+      ? `<input type="text" class="edit-hname" data-hid="${h.id}" value="${escapeHtml(h.name)}" placeholder="${t('habitatNamePh')}">`
+      : `<h3><span class="dot" style="background:var(--accent-2);"></span>${escapeHtml(displayHabitat(h))}</h3>`;
+
+    const descHtml = editMode
+      ? `<input type="text" class="edit-hdesc inline-desc" data-hid="${h.id}" value="${escapeHtml(h.description||"")}" placeholder="${t('descPh')}">`
+      : (h.description ? `<div class="desc">${escapeHtml(h.description)}</div>` : "");
+
+    const memberListHtml = members.length ? `<ul>${members.map(m=>`
+      <li data-pid="${m.id}" ${editMode?'draggable="true"':""}>
+        <span class="member-main">
+          <span class="member-name">${escapeHtml(displayName(m))}</span>
+          <span class="member-abilities">· ${escapeHtml(tooltipText(m))}</span>
+        </span>
+        <span class="member-right">${editMode?`<button type="button" class="removepoke" data-pid="${m.id}" data-habitat="${h.id}" title="${t('deleteBtn')}">×</button>`:""}</span>
+      </li>`).join("")}</ul>` : `<div class="empty">${t("emptyMembersHabitat")}</div>`;
+
+    return `
+      <div class="groupcard" style="border-top-color:var(--accent-2);" data-hid="${h.id}">
+        <div class="cardhead">
+          ${headHtml}
+        </div>
+        ${descHtml}
+        <div class="count">${members.length}${t("countSuffix")}</div>
+        ${memberListHtml}
+        ${editMode ? `
+          <div class="addpoke">
+            <label>${t("addPokeToHabitat")}</label>
+            <input type="text" class="addpoke-search" placeholder="${t('searchPokePh')}">
+            <div class="addpoke-results"></div>
+          </div>
+          <div class="editrow">
+            <button class="dangerbtn" data-delete-habitat="${h.id}">${t("deleteHabitatBtn")}</button>
+          </div>` : ""}
+      </div>`;
+  }).join("");
+
+  // Inline-Bearbeitung Name/Beschreibung (auto-save on change)
+  grid.querySelectorAll(".edit-hname, .edit-hdesc").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const hid = el.dataset.hid;
+      const h = habitatById(hid);
+      if(!h) return;
+      const card = grid.querySelector(`.groupcard[data-hid="${hid}"]`);
+      const nameInput = card.querySelector(".edit-hname");
+      const name = nameInput.value.trim();
+      if(!name){ nameInput.focus(); return; }
+      h.name = name;
+      h.description = card.querySelector(".edit-hdesc").value.trim();
+      persist();
+      renderHabitatsView();
+      renderPokemonTable();
+      renderGroupsView();
+    });
+  });
+
+  grid.querySelectorAll("[data-delete-habitat]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const hid = btn.dataset.deleteHabitat;
+      const h = habitatById(hid);
+      const memberCount = getAllPokemon().filter(p=> assignments[p.id] && assignments[p.id].habitatId === hid).length;
+      showConfirm({
+        title: t("deleteHabitatBtn") + "?",
+        text: textHabitatDelete(displayHabitat(h), memberCount),
+        onConfirm: ()=>{
+          habitats = habitats.filter(x=>x.id!==hid);
+          Object.keys(assignments).forEach(pid=>{
+            if(assignments[pid].habitatId === hid) assignments[pid].habitatId = null;
+          });
+          persist();
+          renderHabitatsView();
+          renderPokemonTable();
+          renderGroupsView();
+        }
+      });
+    });
+  });
+
+  // X: Pokémon aus Habitat entfernen (nur im Edit-Mode sichtbar; Bestätigung je nach "Vor Entfernen fragen")
+  grid.querySelectorAll(".removepoke").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const pid = btn.dataset.pid;
+      const hid = btn.dataset.habitat;
+      const pokemon = getAllPokemon().find(p=>p.id===pid);
+      const h = habitatById(hid);
+      const doRemove = ()=>{
+        assignments[pid] = assignments[pid] || {};
+        assignments[pid].habitatId = null;
+        persist();
+        renderHabitatsView();
+        renderPokemonTable();
+        renderGroupsView();
+      };
+      if(!askBeforeRemoval){
+        doRemove();
+      } else {
+        showConfirm({
+          title: t("deleteBtn") + "?",
+          text: textRemoveFromHabitat(displayName(pokemon), displayHabitat(h)),
+          onConfirm: doRemove
+        });
+      }
+    });
+  });
+
+  // Drag & Drop zwischen Habitat-Karten (nur im Edit-Mode aktiv)
+  grid.querySelectorAll(".groupcard li[draggable]").forEach(li=>{
+    li.addEventListener("dragstart", (e)=>{
+      e.dataTransfer.setData("text/plain", li.dataset.pid);
+      li.classList.add("dragging");
+    });
+    li.addEventListener("dragend", ()=> li.classList.remove("dragging"));
+  });
+  grid.querySelectorAll(".groupcard").forEach(card=>{
+    card.addEventListener("dragover", (e)=>{
+      if(!editMode) return;
+      e.preventDefault();
+      card.classList.add("drag-over");
+    });
+    card.addEventListener("dragleave", ()=> card.classList.remove("drag-over"));
+    card.addEventListener("drop", (e)=>{
+      if(!editMode) return;
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      const pid = e.dataTransfer.getData("text/plain");
+      if(!pid) return;
+      const hid = card.dataset.hid;
+      assignments[pid] = assignments[pid] || {};
+      if(assignments[pid].habitatId === hid) return;
+      assignments[pid].habitatId = hid;
+      persist();
+      renderHabitatsView();
+      renderPokemonTable();
+      renderGroupsView();
+    });
+  });
+
+  // Pokémon-Suche zum Hinzufügen (nur im Edit-Mode sichtbar)
+  grid.querySelectorAll(".groupcard").forEach(card=>{
+    const hid = card.dataset.hid;
+    const searchInput = card.querySelector(".addpoke-search");
+    const resultsEl = card.querySelector(".addpoke-results");
+    if(!searchInput) return;
+    searchInput.addEventListener("input", ()=>{
+      renderAddPokeResults(searchInput.value, resultsEl, (pokemon)=>{
+        assignments[pokemon.id] = assignments[pokemon.id] || {};
+        assignments[pokemon.id].habitatId = hid;
+        persist();
+        renderHabitatsView();
+        renderPokemonTable();
+      });
+    });
+  });
+}
+
+// gemeinsame Trefferliste für die Pokémon-Suche in Gruppen-/Habitat-Edit-Panels
+function renderAddPokeResults(query, resultsEl, onPick){
+  const q = query.trim().toLowerCase();
+  if(!q){ resultsEl.innerHTML = ""; return; }
+  const matches = getAllPokemon()
+    .filter(p=> p.name.toLowerCase().includes(q) || (NAME_DE[p.id]||"").toLowerCase().includes(q) || p.nr.toLowerCase().includes(q))
+    .slice(0, 8);
+  if(matches.length === 0){
+    resultsEl.innerHTML = `<div class="nomatch">${t("nomatch")}</div>`;
+    return;
+  }
+  resultsEl.innerHTML = matches.map(p=>
+    `<button type="button" data-pickpoke="${p.id}">${escapeHtml(p.nr)} · ${escapeHtml(displayName(p))}</button>`
+  ).join("");
+  resultsEl.querySelectorAll("[data-pickpoke]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const pokemon = getAllPokemon().find(p=>p.id===btn.dataset.pickpoke);
+      onPick(pokemon);
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   ADD GROUP / HABITAT (Formulare oben im Gruppen-Tab)
+--------------------------------------------------------- */
+document.getElementById("btn-add-group").addEventListener("click", ()=>{
+  const nameInput = document.getElementById("new-group-name");
+  const colorInput = document.getElementById("new-group-color");
+  const descInput = document.getElementById("new-group-desc");
+  const name = nameInput.value.trim();
+  if(!name){ nameInput.focus(); return; }
+  groups.push({id: uid(), name, color: colorInput.value, description: descInput.value.trim(), status: "wip"});
+  nameInput.value = ""; descInput.value = "";
+  persist();
+  renderGroupsView();
+  renderFilterDropdowns();
+  renderPokemonTable();
+});
+
+document.getElementById("btn-add-habitat").addEventListener("click", ()=>{
+  const nameInput = document.getElementById("new-habitat-name");
+  const descInput = document.getElementById("new-habitat-desc");
+  const name = nameInput.value.trim();
+  if(!name){ nameInput.focus(); return; }
+  habitats.push({id: uid(), name, description: descInput.value.trim()});
+  nameInput.value = ""; descInput.value = "";
+  persist();
+  renderHabitatsView();
+  renderPokemonTable();
+});
+
+/* ---------------------------------------------------------
+   EDIT MODE + NEUES POKÉMON ANLEGEN
+--------------------------------------------------------- */
+document.getElementById("btn-lang").addEventListener("click", ()=>{
+  lang = lang === "de" ? "en" : "de";
+  document.getElementById("btn-lang").textContent = lang === "de" ? "🌐 DE" : "🌐 EN";
+  persist(true);
+  applyI18n();
+  renderFilterDropdowns();
+  renderPokemonTable();
+  renderGroupsView();
+  renderHabitatsView();
+});
+
+function setHeaderEditButtons(){
+  document.getElementById("btn-editmode").style.display = editMode ? "none" : "";
+  document.getElementById("btn-export").style.display = editMode ? "none" : "";
+  document.getElementById("btn-import").style.display = editMode ? "none" : "";
+  document.getElementById("btn-discard").style.display = editMode ? "" : "none";
+  document.getElementById("btn-save").style.display = editMode ? "" : "none";
+  document.getElementById("ask-before-removal-wrap").style.display = editMode ? "" : "none";
+  document.getElementById("new-pokemon-form").style.display = editMode ? "" : "none";
+  document.getElementById("th-action").style.display = editMode ? "" : "none";
+}
+
+document.getElementById("ask-before-removal").addEventListener("change", (e)=>{
+  askBeforeRemoval = e.target.checked;
+});
+
+document.getElementById("btn-editmode").addEventListener("click", ()=>{
+  editSnapshot = JSON.stringify({groups, assignments, habitats, customPokemon});
+  editMode = true;
+  askBeforeRemoval = true;
+  document.getElementById("ask-before-removal").checked = true;
+  setHeaderEditButtons();
+  renderPokemonTable();
+  renderGroupsView();
+  renderHabitatsView();
+});
+
+document.getElementById("btn-save").addEventListener("click", ()=>{
+  editMode = false;
+  persist(true);
+  editSnapshot = null;
+  setHeaderEditButtons();
+  renderPokemonTable();
+  renderGroupsView();
+  renderHabitatsView();
+});
+
+document.getElementById("btn-discard").addEventListener("click", ()=>{
+  showConfirm({
+    title: t("discardTitle"),
+    text: t("discardText"),
+    onConfirm: ()=>{
+      if(editSnapshot){
+        const snap = JSON.parse(editSnapshot);
+        groups = snap.groups;
+        assignments = snap.assignments;
+        habitats = snap.habitats;
+        customPokemon = snap.customPokemon;
+      }
+      editMode = false;
+      editSnapshot = null;
+      setHeaderEditButtons();
+      renderFilterDropdowns();
+      renderPokemonTable();
+      renderGroupsView();
+      renderHabitatsView();
+    }
+  });
+});
+
+document.getElementById("btn-add-pokemon").addEventListener("click", ()=>{
+  const nrInput = document.getElementById("new-poke-nr");
+  const nameInput = document.getElementById("new-poke-name");
+  const abilitiesInput = document.getElementById("new-poke-abilities");
+  const litterInput = document.getElementById("new-poke-litter");
+
+  const name = nameInput.value.trim();
+  const nr = nrInput.value.trim() || "—";
+  const abilities = abilitiesInput.value.split(",").map(a=>a.trim()).filter(Boolean);
+  const litterItem = litterInput.value.trim() || null;
+
+  if(!name){ nameInput.focus(); return; }
+  if(abilities.length === 0){ abilitiesInput.focus(); return; }
+
+  const id = "custom__" + uid();
+  customPokemon.push({id, nr, name, abilities, litterItem, custom:true});
+
+  nrInput.value = ""; nameInput.value = ""; abilitiesInput.value = ""; litterInput.value = "";
+  persist();
+  renderPokemonTable();
+  renderFilterDropdowns();
+});
+
+/* ---------------------------------------------------------
+   TABS
+--------------------------------------------------------- */
+document.getElementById("tab-pokemon").addEventListener("click", ()=>{
+  document.getElementById("tab-pokemon").classList.add("active");
+  document.getElementById("tab-groups").classList.remove("active");
+  document.getElementById("view-pokemon").style.display = "";
+  document.getElementById("view-groups").style.display = "none";
+  document.getElementById("searchwrap").style.display = "";
+});
+document.getElementById("tab-groups").addEventListener("click", ()=>{
+  document.getElementById("tab-groups").classList.add("active");
+  document.getElementById("tab-pokemon").classList.remove("active");
+  document.getElementById("view-groups").style.display = "";
+  document.getElementById("view-pokemon").style.display = "none";
+  document.getElementById("searchwrap").style.display = "none";
+  renderGroupsView();
+  renderHabitatsView();
+});
+
+document.getElementById("search").addEventListener("input", renderPokemonTable);
+document.getElementById("filter-group").addEventListener("change", renderPokemonTable);
+document.getElementById("filter-ability").addEventListener("change", renderPokemonTable);
+
+/* ---------------------------------------------------------
+   EXPORT / IMPORT
+--------------------------------------------------------- */
+document.getElementById("btn-export").addEventListener("click", ()=>{
+  const data = {groups, assignments, habitats, customPokemon, exportedAt: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "pokopia-gruppen-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("btn-import").addEventListener("click", ()=>{
+  document.getElementById("file-import").click();
+});
+document.getElementById("file-import").addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      showConfirm({
+        title:t("importOverwriteTitle"),
+        text:textImportOverwrite(data.groups?.length||0, (data.habitats||[]).length, (data.customPokemon||[]).length, Object.keys(data.assignments||{}).length),
+        onConfirm: ()=>{
+          groups = data.groups || [];
+          assignments = data.assignments || {};
+          habitats = data.habitats && data.habitats.length ? data.habitats : [...DEFAULT_HABITATS];
+          customPokemon = data.customPokemon || [];
+          migrateData();
+          persist();
+          renderFilterDropdowns();
+          renderPokemonTable();
+          renderGroupsView();
+          renderHabitatsView();
+        }
+      });
+    }catch(err){
+      alert(textFileReadError(err.message));
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+/* ---------------------------------------------------------
+   INIT
+--------------------------------------------------------- */
+
+(async function init(){
+  await initStorage();
+  document.getElementById("btn-lang").textContent = lang === "de" ? "🌐 DE" : "🌐 EN";
+  applyI18n();
+  renderFilterDropdowns();
+  renderPokemonTable();
+  renderGroupsView();
+  renderHabitatsView();
+})();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(e=>console.warn("Service Worker Registrierung fehlgeschlagen:", e));
+  });
+}
+</script>
+</body>
+</html>
