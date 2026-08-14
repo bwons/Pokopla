@@ -1236,7 +1236,9 @@ const STRINGS = {
     habitatNameModalPh:"Name des Habitats",
     confirmBtn:"Bestätigen",
     dropzoneText:"⇩ JSON-Backup hier ablegen zum Importieren",
-    footer:"Daten liegen lokal in diesem Tool (window.storage) · Export empfiehlt sich als Backup",
+    footerWindow:"Daten liegen lokal in diesem Tool (Claude-Speicher) · Export empfiehlt sich als Backup",
+    footerLocal:"Daten liegen lokal in deinem Browser (localStorage) · Export empfiehlt sich als Backup",
+    footerMemory:"Daten gelten nur für diese Sitzung · Bitte JSON exportieren!",
     footerGithub:"📂 Quellcode auf GitHub",
     wip:"◐ WIP", done:"✓ DONE",
   },
@@ -1290,7 +1292,9 @@ const STRINGS = {
     habitatNameModalPh:"Habitat name",
     confirmBtn:"Confirm",
     dropzoneText:"⇩ Drop JSON backup here to import",
-    footer:"Data lives locally in this tool (window.storage) · Exporting as backup is recommended",
+    footerWindow:"Data lives locally in this tool (Claude storage) · Exporting as backup is recommended",
+    footerLocal:"Data lives locally in your browser (localStorage) · Exporting as backup is recommended",
+    footerMemory:"Data only lasts for this session · Please export JSON!",
     footerGithub:"📂 View source on GitHub",
     wip:"◐ WIP", done:"✓ DONE",
   }
@@ -1391,7 +1395,8 @@ function applyI18n(){
 
   const dz = document.querySelector("#dropzone .dropzone-inner");
   if(dz) dz.textContent = t("dropzoneText");
-  setText("footer-text", "footer");
+  const footerKey = storageMode === "window" ? "footerWindow" : storageMode === "local" ? "footerLocal" : "footerMemory";
+  setText("footer-text", footerKey);
   setText("footer-github", "footerGithub");
 }
 
@@ -2492,6 +2497,14 @@ document.getElementById("file-import").addEventListener("change", (e)=>{
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
     navigator.serviceWorker.register("sw.js").catch(e=>console.warn("Service Worker Registrierung fehlgeschlagen:", e));
+  });
+  // Sobald ein neuer Service Worker die Kontrolle übernimmt (= neue Version verfügbar),
+  // einmalig neu laden, damit Updates sofort sichtbar sind statt erst beim übernächsten Öffnen.
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+    if(refreshing) return;
+    refreshing = true;
+    window.location.reload();
   });
 }
 </script>
